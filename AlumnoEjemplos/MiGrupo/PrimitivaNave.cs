@@ -20,6 +20,8 @@ namespace AlumnoEjemplos.NaveEspacial
         TgcSkyBox skyBox;  //cieloEnvolvente
         float currentAccel;
         float maxSpeed;
+        int subiendoDir; //1 - subiendo, 0 - neutro, -1 - bajando
+        float anguloSubida;
 
         public override string getCategory()
         {
@@ -58,7 +60,7 @@ namespace AlumnoEjemplos.NaveEspacial
                 //Crear SkyBox 
                 skyBox = new TgcSkyBox();
                 skyBox.Center = new Vector3(0, 0, 0);
-                skyBox.Size = new Vector3(1000, 1000, 1000);
+                skyBox.Size = new Vector3(4000, 4000, 4000);
                 
                 //Configurar las texturas para cada una de las 6 caras
                 skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Up, texturesPath + "lun4_up.jpg");
@@ -70,6 +72,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
                 skyBox.updateValues();
 
+       
                 
                 
             //AGREGO UNA CAJA de METAL
@@ -108,6 +111,8 @@ namespace AlumnoEjemplos.NaveEspacial
             //seteo valor inicial de las variables del movimiento
             currentAccel = 0f;
             maxSpeed = -2f; //valor temporal
+            subiendoDir = 0;
+            anguloSubida = 0f;
         }
 
 
@@ -166,6 +171,24 @@ namespace AlumnoEjemplos.NaveEspacial
                 GuiController.Instance.ThirdPersonCamera.rotateY(-RotationY * elapsedTime);
             }
 
+            //Shift, quiero subir
+            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift))
+            {
+                subiendoDir = 1;
+            }
+            else if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl)) //control, quiero bajar
+            {
+                subiendoDir = -1;
+            }
+            else //nada
+            {
+                subiendoDir = 0;
+            }
+
+            //proceso la subiendoDir
+            spaceShip.move(0, curAccel * subiendoDir * -1f, 0); //multiplico por la dir para que sea Arriba/Abajo
+            Subiendo(subiendoDir, elapsedTime);
+
             //Tecla Up apretada
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Up))
             {
@@ -210,6 +233,19 @@ namespace AlumnoEjemplos.NaveEspacial
             skyBox.dispose();
             box.dispose();
             spaceShip.dispose();
+        }
+
+        public void Subiendo(int unaDir, float deltaTime)
+        {
+            if (subiendoDir != 0)
+            {
+                if (anguloSubida < Geometry.DegreeToRadian(30) * unaDir || anguloSubida > Geometry.DegreeToRadian(30) * unaDir) { anguloSubida += 0.1f * unaDir * deltaTime; spaceShip.rotateX(0.1f * unaDir * deltaTime); }
+            }
+            else
+            {
+                spaceShip.rotateX(-anguloSubida);
+                anguloSubida = 0;
+            }
         }
     }
 }
