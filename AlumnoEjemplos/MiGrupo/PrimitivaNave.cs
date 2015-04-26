@@ -18,6 +18,8 @@ namespace AlumnoEjemplos.NaveEspacial
         TgcBox box; //caja
         TgcMesh spaceShip; //nave
         TgcSkyBox skyBox;  //cieloEnvolvente
+        float currentAccel;
+        float maxSpeed;
 
         public override string getCategory()
         {
@@ -81,8 +83,11 @@ namespace AlumnoEjemplos.NaveEspacial
 
 
              ///////////////MODIFIERS//////////////////
-            //Para la Velocidad de la Caja (Float)
-            GuiController.Instance.Modifiers.addFloat("Speed", 0f, 30f, 10f);
+            //display de la aceleracion de la nave
+            GuiController.Instance.Modifiers.addFloat("curAccel", -15f, 15f, 0f);
+
+            //lo que va incrementando la aceleracion
+            GuiController.Instance.Modifiers.addFloat("SpeedModifier", 0f, 2f, 0.1f);
 
             //Para la Rotacion de la Caja a los costados (Float)
             GuiController.Instance.Modifiers.addFloat("RotationY", 0f, 20f, 2f);
@@ -99,6 +104,10 @@ namespace AlumnoEjemplos.NaveEspacial
             GuiController.Instance.ThirdPersonCamera.Enable = true;
             //Configurar a quien sigue y a que distancia Altura y Lejania
             GuiController.Instance.ThirdPersonCamera.setCamera(spaceShip.Position, 100, 200);
+
+            //seteo valor inicial de las variables del movimiento
+            currentAccel = 0f;
+            maxSpeed = -2f; //valor temporal
         }
 
 
@@ -111,7 +120,8 @@ namespace AlumnoEjemplos.NaveEspacial
             Device d3dDevice = GuiController.Instance.D3dDevice;
 
             //Obtener valores de Modifiers
-            float Speed = (float)GuiController.Instance.Modifiers["Speed"];
+            float curAccel = (float)GuiController.Instance.Modifiers["curAccel"];
+            float Speed = (float)GuiController.Instance.Modifiers["SpeedModifier"];
             float RotationY = (float)GuiController.Instance.Modifiers["RotationY"];
             float RotationX = (float)GuiController.Instance.Modifiers["RotationX"];
             float RotationZ = (float)GuiController.Instance.Modifiers["RotationZ"];
@@ -120,25 +130,40 @@ namespace AlumnoEjemplos.NaveEspacial
             //Tecla W apretada
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W))
             {
-                spaceShip.move(Speed * elapsedTime, 0, 0); //hacia adelante en X
+                //spaceShip.move(Speed * elapsedTime, 0, 0); //hacia adelante en X
+                //spaceShip.moveOrientedY(-Speed * elapsedTime);
+                currentAccel -= Speed * elapsedTime;
+
+                if (currentAccel < maxSpeed) { currentAccel = maxSpeed; } //limito la velocidad maxima
             }
 
-            //Tecla S apretada
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.S))
             {
-                spaceShip.move(-Speed * elapsedTime, 0, 0); //hacia atras en X
+                //spaceShip.move(Speed * elapsedTime, 0, 0); //hacia adelante en X
+                //spaceShip.moveOrientedY(-Speed * elapsedTime);
+                currentAccel += Speed * elapsedTime;
+
+                if (currentAccel > 0) { currentAccel = 0; } //es desaceleracion, no la reversa
             }
 
+            //actualizo el display de la aceleracion
+            curAccel = currentAccel;
+
+            //muevo la nave en base a la aceleracion que se le da
+            spaceShip.moveOrientedY(currentAccel);
+
             //Tecla A apretada
-            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.A))
+            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.D))
             {
                 spaceShip.rotateY(RotationY * elapsedTime); //rota hacia la izq en Y
+                GuiController.Instance.ThirdPersonCamera.rotateY(RotationY * elapsedTime);
             }
 
             //Tecla D apretada
-            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.D))
+            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.A))
             {
                 spaceShip.rotateY(-RotationY * elapsedTime); //rota hacia la der en Y
+                GuiController.Instance.ThirdPersonCamera.rotateY(-RotationY * elapsedTime);
             }
 
             //Tecla Up apretada
