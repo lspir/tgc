@@ -23,6 +23,7 @@ namespace AlumnoEjemplos.NaveEspacial
         float currentAccel;
         float maxSpeed;
         float AngleZRotation;
+        float anguloSubida;
 
         public override string getCategory()
         {
@@ -55,7 +56,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
             //TEXTO de explicacion
             text1 = new TgcText2d();
-            text1.Text = "Aceleracion: W, Freno: S,                     RotarHorizontal: A y D";
+            text1.Text = "Aceleracion: W, Freno: S                     RotarHorizontal: A y D                              Subir: Shift, Bajar: Ctrl";
             text1.Align = TgcText2d.TextAlign.RIGHT;
             text1.Position = new Point(50, 50);
             text1.Size = new Size(300, 100);
@@ -122,6 +123,7 @@ namespace AlumnoEjemplos.NaveEspacial
             currentAccel = 0f;
             maxSpeed = -2f; //valor temporal
             AngleZRotation = 0f;
+            anguloSubida = 0f;
         }
 
 
@@ -163,7 +165,7 @@ namespace AlumnoEjemplos.NaveEspacial
                 if (currentAccel < maxSpeed) { currentAccel = maxSpeed; } //limito la velocidad maxima
             }
 
-                //la desacelero lentamente si no se le da aceleración
+                //DESACELERACION y vuelta a la posicion original (horizonte)
                 if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W))
                 {
                     currentAccel += 0.5f * speed * elapsedTime;
@@ -179,6 +181,16 @@ namespace AlumnoEjemplos.NaveEspacial
                 {
                     spaceShip.rotateZ(rotationZ * 0.2f * elapsedTime); //rota barrelRoll en Z hacia la der
                     AngleZRotation += (rotationZ * 0.2f * elapsedTime);
+                }
+                if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift) && anguloSubida > 0)
+                {
+                    spaceShip.rotateX(-1.5f * elapsedTime); //rota la trompa hacia abajo
+                    anguloSubida -= (1.5f * elapsedTime);
+                }
+                if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl) && anguloSubida < 0)
+                {
+                    spaceShip.rotateX(1.5f * elapsedTime); //rota la trompa hacia arriba
+                    anguloSubida += 1.5f * elapsedTime;
                 }
 
             //Tecla S apretada (Freno)
@@ -218,17 +230,33 @@ namespace AlumnoEjemplos.NaveEspacial
                 }
             }
 
-            //Tecla Up apretada
-            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Up))
+            //Shift, quiero subir
+            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift))
             {
-                spaceShip.rotateX(rotationX * elapsedTime); //rota hacia la arriba en X
+                spaceShip.move(0, currAccel * -1f, 0); //multiplico por la dir para que sea Arriba/Abajo
+                Subiendo(1, rotationY, elapsedTime);
+            }
+            
+            //Control, quiero bajar
+            else if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl)) 
+            {
+                spaceShip.move(0, currAccel, 0); //multiplico por la dir para que sea Arriba/Abajo
+                Subiendo(-1, rotationY, elapsedTime);
             }
 
-            //Tecla Down apretada
-            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Down))
-            {
-                spaceShip.rotateX(-rotationX * elapsedTime); //rota hacia la abajo en X
-            }
+            /*
+                //Tecla Up apretada
+                if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Up))
+                {
+                    spaceShip.rotateX(rotationX * elapsedTime); //rota hacia la arriba en X
+                }
+
+                //Tecla Down apretada
+                if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Down))
+                {
+                    spaceShip.rotateX(-rotationX * elapsedTime); //rota hacia la abajo en X
+                }
+            */
 
             //Tecla Right apretada
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Right))
@@ -266,6 +294,15 @@ namespace AlumnoEjemplos.NaveEspacial
             box.dispose();
             spaceShip.dispose();
             text1.dispose();
+        }
+
+        public void Subiendo(int unaDir, float rotacion, float deltaTime)
+        {
+            if (anguloSubida < Geometry.DegreeToRadian(30) * unaDir || anguloSubida > Geometry.DegreeToRadian(30) * unaDir) 
+            { 
+                anguloSubida += rotacion * unaDir * deltaTime; 
+                spaceShip.rotateX(rotacion * unaDir * deltaTime); 
+            }
         }
     }
 }
