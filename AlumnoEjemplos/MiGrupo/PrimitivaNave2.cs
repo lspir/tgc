@@ -107,7 +107,7 @@ namespace AlumnoEjemplos.NaveEspacial
             GuiController.Instance.Modifiers.addFloat("rotationX", 0f, 10f, 1f);
 
             //Para la Rotacion de la Caja como barrelRoll (Float)
-            GuiController.Instance.Modifiers.addFloat("rotationZ", 0f, 5f, 0.5f);
+            GuiController.Instance.Modifiers.addFloat("rotationZ", 0f, 5f, 1.5f);
 
             //Para la rapidez en la cual vuelve a la rotacion original (Float)
             GuiController.Instance.Modifiers.addFloat("angRetorno", 0f, 2f, 0.8f);
@@ -184,13 +184,13 @@ namespace AlumnoEjemplos.NaveEspacial
                 }
                 if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift) && anguloSubida > 0)
                 {
-                    spaceShip.rotateX(-1.5f * elapsedTime); //rota la trompa hacia abajo
-                    anguloSubida -= (1.5f * elapsedTime);
+                    spaceShip.rotateX(-rotationX * elapsedTime); //rota la trompa hacia abajo
+                    anguloSubida -= (rotationX * elapsedTime);
                 }
                 if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl) && anguloSubida < 0)
                 {
-                    spaceShip.rotateX(1.5f * elapsedTime); //rota la trompa hacia arriba
-                    anguloSubida += 1.5f * elapsedTime;
+                    spaceShip.rotateX(rotationX * elapsedTime); //rota la trompa hacia arriba
+                    anguloSubida += rotationX * elapsedTime;
                 }
 
             //Tecla S apretada (Freno)
@@ -215,8 +215,8 @@ namespace AlumnoEjemplos.NaveEspacial
             {
                 if (AngleZRotation < 1.2)
                 {
-                    spaceShip.rotateZ(rotationZ * elapsedTime); //rota barrelRoll en Z hacia la der
-                    AngleZRotation += (rotationZ * elapsedTime);
+                    spaceShip.rotateZ(rotationZ * (-currAccel/2) * elapsedTime); //rota barrelRoll en Z hacia la der
+                    AngleZRotation += (rotationZ * (-currAccel / 2) * elapsedTime);
                 }
             }
 
@@ -225,8 +225,8 @@ namespace AlumnoEjemplos.NaveEspacial
             {
                 if (AngleZRotation > -1.2)
                 {
-                    spaceShip.rotateZ(-rotationZ * elapsedTime); //rota barrelRoll en Z hacia la izq
-                    AngleZRotation -= (rotationZ * elapsedTime);
+                    spaceShip.rotateZ(-rotationZ * (-currAccel / 2) * elapsedTime); //rota barrelRoll en Z hacia la izq
+                    AngleZRotation -= (rotationZ * (-currAccel / 2) * elapsedTime);
                 }
             }
 
@@ -234,14 +234,14 @@ namespace AlumnoEjemplos.NaveEspacial
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift))
             {
                 spaceShip.move(0, currAccel * -1f, 0); //multiplico por la dir para que sea Arriba/Abajo
-                Subiendo(1, rotationY, elapsedTime);
+                Subiendo(1, currAccel*rotationX, elapsedTime);
             }
             
             //Control, quiero bajar
             else if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl)) 
             {
                 spaceShip.move(0, currAccel, 0); //multiplico por la dir para que sea Arriba/Abajo
-                Subiendo(-1, rotationY, elapsedTime);
+                Subiendo(-1, currAccel*rotationX, elapsedTime);
             }
 
             /*
@@ -296,12 +296,12 @@ namespace AlumnoEjemplos.NaveEspacial
             text1.dispose();
         }
 
-        public void Subiendo(int unaDir, float rotacion, float deltaTime)
+        public void Subiendo(int unaDir, float aceleracion, float deltaTime)
         {
-            if (anguloSubida < Geometry.DegreeToRadian(30) * unaDir || anguloSubida > Geometry.DegreeToRadian(30) * unaDir) 
-            { 
-                anguloSubida += rotacion * unaDir * deltaTime; 
-                spaceShip.rotateX(rotacion * unaDir * deltaTime); 
+            if (anguloSubida < Geometry.DegreeToRadian(30) && anguloSubida > Geometry.DegreeToRadian(-30)) 
+            {
+                anguloSubida += (-aceleracion/2) * unaDir * deltaTime; 
+                spaceShip.rotateX((-aceleracion/2) * unaDir * deltaTime); 
             }
         }
     }
