@@ -1,10 +1,12 @@
 # tgc
 Trabajo Practico TGC-1c-2015
+
   Clavelli Lucas, Gomez Luboz Martin, Spir Leandro, Viviani Pablo
 
 TEMA: Spaceship
 
 <Funcionalidades obligatorias para 1ra entrega:     	jueves 21 de mayo	(presencial)
+  
   o Crear un escenario en el espacio en el cual un usuario controla una nave 
     espacial en tercera persona que combate contra otras naves enemigas.
 
