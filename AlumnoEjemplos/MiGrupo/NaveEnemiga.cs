@@ -9,6 +9,7 @@ using Microsoft.DirectX;
 using TgcViewer.Utils.Modifiers;
 using TgcViewer.Utils.TgcGeometry;
 using TgcViewer.Utils.TgcSceneLoader;
+using System.Diagnostics;
 
 namespace AlumnoEjemplos.NaveEnemiga
 {
@@ -18,7 +19,9 @@ namespace AlumnoEjemplos.NaveEnemiga
         TgcBox box; //Simula la nave principal
         TgcMesh naveEnemiga; //Nave
         Vector3 dir_nave;
+        Vector3 pos_nave;
         float time;
+        Random random = new Random();
 
         //Variable direccion de movimiento
         float currentMoveDir = 1f;
@@ -54,9 +57,10 @@ namespace AlumnoEjemplos.NaveEnemiga
             TgcScene scene = loader.loadSceneFromFile(GuiController.Instance.AlumnoEjemplosMediaDir + "NaveStarWars\\naveStarWars-TgcScene.xml");
             naveEnemiga = scene.Meshes[0];
 
-
+            //Inicializo la nave
+            obtenerPosicionYMovimiento();
             naveEnemiga.Scale = new Vector3(0.2f, 0.2f, 0.2f);
-            naveEnemiga.Position = new Vector3(100f, 100f, 0f);
+            naveEnemiga.Position = pos_nave;
             naveEnemiga.AutoTransformEnable = false;
             dir_nave = new Vector3(0, 0, 1);
 
@@ -80,7 +84,7 @@ namespace AlumnoEjemplos.NaveEnemiga
             //Configurar Posicion y Movimiento de la nave
             time += elapsedTime;
             float alfa = -time * Geometry.DegreeToRadian(15.0f);
-            naveEnemiga.Position = new Vector3(80f * (float)Math.Cos(alfa), 40 - 20 * (float)Math.Sin(alfa), 80f * (float)Math.Sin(alfa));
+            naveEnemiga.Position = new Vector3(pos_nave.X * (float)Math.Cos(alfa), pos_nave.Y * (float)Math.Sin(alfa), pos_nave.Z * (float)Math.Sin(alfa));
             dir_nave = new Vector3(-(float)Math.Sin(alfa), 0, (float)Math.Cos(alfa));
             naveEnemiga.Transform = CalcularMatriz(naveEnemiga.Position, naveEnemiga.Scale, dir_nave);
 
@@ -101,13 +105,9 @@ namespace AlumnoEjemplos.NaveEnemiga
         //TODO Configurar para que sea random
         public Matrix CalcularMatriz(Vector3 Pos, Vector3 Scale, Vector3 Dir)
         {
-   
-            Random rY = new Random();
-            int rYInt = rY.Next(0, 2);
             Vector3 VUP = new Vector3(0, 1, 0);
-
             Matrix matWorld = Matrix.Scaling(Scale);
-            // determino la orientacion
+            // Determino la orientacion
             Vector3 U = Vector3.Cross(VUP, Dir);
             U.Normalize();
             Vector3 V = Vector3.Cross(Dir, U);
@@ -133,11 +133,30 @@ namespace AlumnoEjemplos.NaveEnemiga
             Orientacion.M44 = 1;
             matWorld = matWorld * Orientacion;
 
-            // traslado
+            // Traslado
             matWorld = matWorld * Matrix.Translation(Pos);
             return matWorld;
         }
 
+        public void obtenerPosicionYMovimiento()
+        {
+            float x1 = getRandomFloat();
+            float y1 = getRandomFloat();
+            float z1 = getRandomFloat();
+
+            //Limitar para que no tenga mucho movimiento sobre eje y
+            while (y1 > 20){
+                y1 = getRandomFloat();
+            }
+
+            pos_nave = new Vector3(x1, y1, z1);
+        }
+
+        public float getRandomFloat(){
+            float r = (float)random.Next(20, 200);
+            
+            return r;
+        }
 
     }
 }
