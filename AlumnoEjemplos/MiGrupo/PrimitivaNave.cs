@@ -10,18 +10,46 @@ using TgcViewer.Utils.Modifiers;
 using TgcViewer.Utils.TgcGeometry;
 using TgcViewer.Utils.TgcSceneLoader;
 using TgcViewer.Utils.Terrain;
+using TgcViewer.Utils._2D;
+
 
 namespace AlumnoEjemplos.NaveEspacial
 {
     public class NaveEspacial : TgcExample
     {
+
+         readonly Vector3 SUN_SCALE = new Vector3(12, 12, 12);
+        readonly Vector3 EARTH_SCALE = new Vector3(3, 3, 3);
+        readonly Vector3 MOON_SCALE = new Vector3(0.5f, 0.5f, 0.5f);
+
+        const float AXIS_ROTATION_SPEED = 0.1f;
+        const float EARTH_AXIS_ROTATION_SPEED = 1f;
+        const float EARTH_ORBIT_SPEED = 0.2f;
+        const float MOON_ORBIT_SPEED = 1f;
+
+        const float EARTH_ORBIT_OFFSET = 700;
+        const float MOON_ORBIT_OFFSET = 80;
+
+        TgcMesh sun;
+        TgcMesh earth;
+        TgcMesh moon;
+
+        float axisRotation = 0f;
+        float earthAxisRotation = 0f;
+        float earthOrbitRotation = 0f;
+        float moonOrbitRotation = 0f;
+
+
+
         TgcBox box; //caja
         TgcMesh spaceShip; //nave
         TgcSkyBox skyBox;  //cieloEnvolvente
+        TgcText2d text1;    //textoExplicacion
         float currentAccel;
         float maxSpeed;
-        int subiendoDir; //1 - subiendo, 0 - neutro, -1 - bajando
+        float AngleZRotation;
         float anguloSubida;
+        
 
         public override string getCategory()
         {
@@ -43,36 +71,68 @@ namespace AlumnoEjemplos.NaveEspacial
         // Método que se llama una sola vez,  al principio cuando se ejecuta el ejemplo.
         // Escribir aquí todo el código de inicialización: cargar modelos, texturas, modifiers, uservars, etc.
         public override void init()
-        {
+        {    
+
             //GuiController.Instance: acceso principal a todas las herramientas del Framework
             //Device de DirectX para crear primitivas
             Device d3dDevice = GuiController.Instance.D3dDevice;
 
             //Cargo el loader de Scenes y los Meshes
             TgcSceneLoader loader = new TgcSceneLoader();
-            TgcScene scene = loader.loadSceneFromFile(GuiController.Instance.ExamplesMediaDir + "MeshCreator\\Meshes\\Vehiculos\\AvionCaza\\AvionCaza-TgcScene.xml");
+            TgcScene scene = loader.loadSceneFromFile(GuiController.Instance.AlumnoEjemplosMediaDir + "NaveStarWars\\NaveStarWars-TgcScene.xml");
 
+            string sphere = GuiController.Instance.ExamplesMediaDir + "ModelosTgc\\Sphere\\Sphere-TgcScene.xml";
+            sun = loader.loadSceneFromFile(sphere).Meshes[0];
+            sun.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.ExamplesDir + "Transformations\\SistemaSolar\\SunTexture.jpg") });
+
+            earth = loader.loadSceneFromFile(sphere).Meshes[0];
+            earth.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.ExamplesDir + "Transformations\\SistemaSolar\\EarthTexture.jpg") });
+
+            moon = loader.loadSceneFromFile(sphere).Meshes[0];
+            moon.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.ExamplesDir + "Transformations\\SistemaSolar\\MoonTexture.jpg") });
+
+
+            //Deshabilitamos el manejo automático de Transformaciones de TgcMesh, para poder manipularlas en forma customizada
+            sun.AutoTransformEnable = false;
+            earth.AutoTransformEnable = false;
+            moon.AutoTransformEnable = false;
+
+
+            //Color de fondo
+            GuiController.Instance.BackgroundColor = Color.Black;
+
+
+
+
+
+
+            //TEXTO de explicacion
+            text1 = new TgcText2d();
+            text1.Text = "Aceleracion: W, Freno: S                       RotarHorizontal: A y D                         Subir: Shift, Bajar: Ctrl                         HiperVelocidad: Space";
+            text1.Align = TgcText2d.TextAlign.RIGHT;
+            text1.Position = new Point(50, 50);
+            text1.Size = new Size(300, 100);
+            text1.Color = Color.Gold;
                 
                 //SKYBOX//
                 //Textura del Cielo
-                string texturesPath = GuiController.Instance.ExamplesMediaDir + "Texturas\\Quake\\SkyBox2\\";
+              //  string texturesPath = GuiController.Instance.ExamplesMediaDir + "Texturas\\Quake\\SkyBox2\\";
 
                 //Crear SkyBox 
-                skyBox = new TgcSkyBox();
-                skyBox.Center = new Vector3(0, 0, 0);
-                skyBox.Size = new Vector3(4000, 4000, 4000);
+             //   skyBox = new TgcSkyBox();
+            //    skyBox.Center = new Vector3(0, 0, 0);
+            //    skyBox.Size = new Vector3(3000, 3000, 3000);
                 
                 //Configurar las texturas para cada una de las 6 caras
-                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Up, texturesPath + "lun4_up.jpg");
-                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Down, texturesPath + "lun4_dn.jpg");
-                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Left, texturesPath + "lun4_lf.jpg");
-                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Right, texturesPath + "lun4_rt.jpg");
-                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Front, texturesPath + "lun4_bk.jpg");
-                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Back, texturesPath + "lun4_ft.jpg");
+            //    skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Up, texturesPath + "lun4_up.jpg");
+            //    skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Down, texturesPath + "lun4_dn.jpg");
+            //    skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Left, texturesPath + "lun4_lf.jpg");
+            //    skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Right, texturesPath + "lun4_rt.jpg");
+            //    skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Front, texturesPath + "lun4_bk.jpg");
+            //    skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Back, texturesPath + "lun4_ft.jpg");
 
-                skyBox.updateValues();
+            //    skyBox.updateValues();
 
-       
                 
                 
             //AGREGO UNA CAJA de METAL
@@ -83,23 +143,31 @@ namespace AlumnoEjemplos.NaveEspacial
 
             //AGREGO UNA NAVE
             spaceShip = scene.Meshes[0];
+            Vector3 escala=new Vector3(0.5f, 0.5f, 0.5f);
+            spaceShip.Scale=(escala);
+            
 
-
-             ///////////////MODIFIERS//////////////////
-            //display de la aceleracion de la nave
-            GuiController.Instance.Modifiers.addFloat("curAccel", -15f, 15f, 0f);
-
+            ///////////////MODIFIERS//////////////////
+            //velocidad de aceleracion de la nave
+            GuiController.Instance.Modifiers.addFloat("currAccel", -15f, 15f, 0f);
+            
             //lo que va incrementando la aceleracion
-            GuiController.Instance.Modifiers.addFloat("SpeedModifier", 0f, 2f, 0.1f);
+            GuiController.Instance.Modifiers.addFloat("speedModifier", 0f, 2f, 0.3f);
 
             //Para la Rotacion de la Caja a los costados (Float)
-            GuiController.Instance.Modifiers.addFloat("RotationY", 0f, 20f, 2f);
+            GuiController.Instance.Modifiers.addFloat("rotationY", 0f, 2f, 0.2f);
 
             //Para la Rotacion de la Caja arriba y abajo (Float)
-            GuiController.Instance.Modifiers.addFloat("RotationX", 0f, 10f, 1f);
+            GuiController.Instance.Modifiers.addFloat("rotationX", 0f, 10f, 1f);
 
             //Para la Rotacion de la Caja como barrelRoll (Float)
-            GuiController.Instance.Modifiers.addFloat("RotationZ", 0f, 5f, 0.5f);
+            GuiController.Instance.Modifiers.addFloat("rotationZ", 0f, 5f, 1.5f);
+
+            //Para la rapidez en la cual vuelve a la rotacion original (Float)
+            GuiController.Instance.Modifiers.addFloat("angRetorno", 0f, 2f, 0.8f);
+
+            //hipervelocidad de la nave
+            GuiController.Instance.Modifiers.addFloat("hyperSpeed", 1f, 5f, 4f);
 
 
             //AGREGO LA CAMARA QUE LA SIGUE
@@ -111,12 +179,12 @@ namespace AlumnoEjemplos.NaveEspacial
             //seteo valor inicial de las variables del movimiento
             currentAccel = 0f;
             maxSpeed = -2f; //valor temporal
-            subiendoDir = 0;
+            AngleZRotation = 0f;
             anguloSubida = 0f;
         }
 
 
-
+        
         // Método que se llama cada vez que hay que refrescar la pantalla.
         // Escribir aquí todo el código referido al renderizado.
         public override void render(float elapsedTime)
@@ -125,104 +193,221 @@ namespace AlumnoEjemplos.NaveEspacial
             Device d3dDevice = GuiController.Instance.D3dDevice;
 
             //Obtener valores de Modifiers
-            float curAccel = (float)GuiController.Instance.Modifiers["curAccel"];
-            float Speed = (float)GuiController.Instance.Modifiers["SpeedModifier"];
-            float RotationY = (float)GuiController.Instance.Modifiers["RotationY"];
-            float RotationX = (float)GuiController.Instance.Modifiers["RotationX"];
-            float RotationZ = (float)GuiController.Instance.Modifiers["RotationZ"];
+            float currAccel = (float)GuiController.Instance.Modifiers["currAccel"];
+            float speed = (float)GuiController.Instance.Modifiers["speedModifier"];
+            float rotationY = (float)GuiController.Instance.Modifiers["rotationY"];
+            float rotationX = (float)GuiController.Instance.Modifiers["rotationX"];
+            float rotationZ = (float)GuiController.Instance.Modifiers["rotationZ"];
+            float angRetorno = (float)GuiController.Instance.Modifiers["angRetorno"];
+            float hyperSpeed = (float)GuiController.Instance.Modifiers["hyperSpeed"];
+
 
             ///////////////INPUT TECLADO//////////////////
-            //Tecla W apretada
+            //Tecla W apretada (si además tiene Space, va a hiperVelocidad
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W))
             {
-                //spaceShip.move(Speed * elapsedTime, 0, 0); //hacia adelante en X
-                //spaceShip.moveOrientedY(-Speed * elapsedTime);
-                currentAccel -= Speed * elapsedTime;
+                //esto hace que si esta llendo en reversa, baje la velocidad a 0 mucho mas rapido, y luego acelere normal, y si se presiona la BarraEspaciadora acelere más rapido
+                if (currentAccel > 0)
+                { currentAccel -= 2.5f * speed * elapsedTime; }
+                else if (currentAccel <= 0 && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
+                { currentAccel -= speed * elapsedTime; }
+                else if (currentAccel <= 0 && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
+                { currentAccel -= hyperSpeed * speed * elapsedTime; }
 
-                if (currentAccel < maxSpeed) { currentAccel = maxSpeed; } //limito la velocidad maxima
+                //Para hacer que vuelva a la posicion original a medida que acelera
+                if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.D) && AngleZRotation > 0)
+                {
+                    spaceShip.rotateZ(-rotationZ * angRetorno * elapsedTime); //rota barrelRoll en Z hacia la izq
+                    AngleZRotation -= (rotationZ * angRetorno * elapsedTime);
+                }
+                if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.A) && AngleZRotation < 0)
+                {
+                    spaceShip.rotateZ(rotationZ * angRetorno * elapsedTime); //rota barrelRoll en Z hacia la der
+                    AngleZRotation += (rotationZ * angRetorno * elapsedTime);
+                }
+
+                //limito la velocidad maxima
+                if (currentAccel < maxSpeed && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
+                { currentAccel = maxSpeed; }
+                else if (currentAccel < maxSpeed * hyperSpeed && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
+                { currentAccel = maxSpeed * hyperSpeed; }
+
             }
 
+            //DESACELERACION y vuelta a la posicion original (horizonte)//
+            if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W) && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.S))
+            {
+                if (currentAccel < 0) { currentAccel += 0.5f * speed * elapsedTime; }
+                else { currentAccel -= 1.5f * speed * elapsedTime; } //esto hace que si no esta acelerando baje la velocidad a 0 (para reversa es mas rapido)
+            }
+            if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.D) && AngleZRotation > 0)
+            {
+                spaceShip.rotateZ(-rotationZ * 0.2f * elapsedTime); //rota barrelRoll en Z hacia la izq
+                AngleZRotation -= (rotationZ * 0.2f * elapsedTime);
+            }
+            if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.A) && AngleZRotation < 0)
+            {
+                spaceShip.rotateZ(rotationZ * 0.2f * elapsedTime); //rota barrelRoll en Z hacia la der
+                AngleZRotation += (rotationZ * 0.2f * elapsedTime);
+            }
+            if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift) && anguloSubida > 0)
+            {
+                spaceShip.rotateX(-rotationX * elapsedTime); //rota la trompa hacia abajo
+                anguloSubida -= (rotationX * elapsedTime);
+            }
+            if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl) && anguloSubida < 0)
+            {
+                spaceShip.rotateX(rotationX * elapsedTime); //rota la trompa hacia arriba
+                anguloSubida += rotationX * elapsedTime;
+            }
+
+            //Tecla S apretada (Freno)
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.S))
             {
-                //spaceShip.move(Speed * elapsedTime, 0, 0); //hacia adelante en X
-                //spaceShip.moveOrientedY(-Speed * elapsedTime);
-                currentAccel += Speed * elapsedTime;
+                if (currentAccel < 0) { currentAccel += 2 * speed * elapsedTime; }
+                else { currentAccel += speed * elapsedTime; }   //esto hace que frene rapido hasta 0 y luego acelere normal en reversa
 
-                if (currentAccel > 0) { currentAccel = 0; } //es desaceleracion, no la reversa
+                if (currentAccel > -maxSpeed / 2) { currentAccel = -maxSpeed / 2; } //limito la velocidad maxima negativa
             }
 
             //actualizo el display de la aceleracion
-            curAccel = currentAccel;
+            currAccel = currentAccel;
 
-            //muevo la nave en base a la aceleracion que se le da
+            //muevo la nave en base a la aceleracion y rotacion que se le da
             spaceShip.moveOrientedY(currentAccel);
+            spaceShip.rotateY(AngleZRotation * elapsedTime);
+            GuiController.Instance.ThirdPersonCamera.rotateY(AngleZRotation * elapsedTime);
 
-            //Tecla A apretada
-            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.D))
-            {
-                spaceShip.rotateY(RotationY * elapsedTime); //rota hacia la izq en Y
-                GuiController.Instance.ThirdPersonCamera.rotateY(RotationY * elapsedTime);
-            }
 
             //Tecla D apretada
+            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.D))
+            {
+                if (currentAccel <= 0 && AngleZRotation < 1.2)
+                {
+                    spaceShip.rotateZ(rotationZ * (-currAccel / 2) * elapsedTime); //rota barrelRoll en Z hacia la der
+                    AngleZRotation += (rotationZ * (-currAccel / 2) * elapsedTime);
+                }
+            }
+
+            //Tecla A apretada
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.A))
             {
-                spaceShip.rotateY(-RotationY * elapsedTime); //rota hacia la der en Y
-                GuiController.Instance.ThirdPersonCamera.rotateY(-RotationY * elapsedTime);
+                if (currentAccel <= 0 && AngleZRotation > -1.2)
+                {
+                    spaceShip.rotateZ(-rotationZ * (-currAccel / 2) * elapsedTime); //rota barrelRoll en Z hacia la izq
+                    AngleZRotation -= (rotationZ * (-currAccel / 2) * elapsedTime);
+                }
             }
 
             //Shift, quiero subir
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift))
             {
-                subiendoDir = 1;
-            }
-            else if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl)) //control, quiero bajar
-            {
-                subiendoDir = -1;
-            }
-            else //nada
-            {
-                subiendoDir = 0;
+                if (currentAccel <= 0)
+                {
+                    spaceShip.move(0, currAccel * -1f, 0);
+                    Subiendo(1, currAccel * rotationX, elapsedTime); //la direccion de la subida es negativa, la velocidad depende de la rotacion en X
+                }
             }
 
-            //proceso la subiendoDir
-            spaceShip.move(0, curAccel * subiendoDir * -1f, 0); //multiplico por la dir para que sea Arriba/Abajo
-            Subiendo(subiendoDir, elapsedTime);
-
-            //Tecla Up apretada
-            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Up))
+            //Control, quiero bajar
+            else if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl))
             {
-                spaceShip.rotateX(RotationX * elapsedTime); //rota hacia la arriba en X
+                if (currentAccel <= 0)
+                {
+                    spaceShip.move(0, currAccel, 0);
+                    Subiendo(-1, currAccel * rotationX, elapsedTime); //la direccion de la subida es negativa, la velocidad depende de la rotacion en X
+                }
             }
 
-            //Tecla Down apretada
-            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Down))
-            {
-                spaceShip.rotateX(-RotationX * elapsedTime); //rota hacia la abajo en X
-            }
+            /*
+                //Tecla Up apretada
+                if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Up))
+                {
+                    spaceShip.rotateX(rotationX * elapsedTime); //rota hacia la arriba en X
+                }
+
+                //Tecla Down apretada
+                if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Down))
+                {
+                    spaceShip.rotateX(-rotationX * elapsedTime); //rota hacia la abajo en X
+                }
+            */
 
             //Tecla Right apretada
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Right))
             {
-                spaceShip.rotateZ(RotationZ * elapsedTime); //rota barrelRoll en Z hacia la der
+                spaceShip.rotateY(rotationY * elapsedTime); //rota hacia la izq en Y (sin inclinarse, rota aunque este detenido o marcha atras)
+                GuiController.Instance.ThirdPersonCamera.rotateY(rotationY * elapsedTime);
             }
 
             //Tecla Left apretada
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Left))
             {
-                spaceShip.rotateZ(-RotationZ * elapsedTime); //rota barrelRoll en Z hacia la izq
+                spaceShip.rotateY(-rotationY * elapsedTime); //rota hacia la der en Y (sin inclinarse, rota aunque este detenido o marcha atras)
+                GuiController.Instance.ThirdPersonCamera.rotateY(-rotationY * elapsedTime);
             }
 
 
             //Hacer que la cámara en 3ra persona se ajuste a la nueva posición del objeto
             GuiController.Instance.ThirdPersonCamera.Target = spaceShip.Position;
+             //Actualizar transformacion y renderizar el sol
+            sun.Transform = getSunTransform(elapsedTime);
+            sun.render();
 
+            //Actualizar transformacion y renderizar la tierra
+            earth.Transform = getEarthTransform(elapsedTime);
+            earth.render();
+
+            //Actualizar transformacion y renderizar la luna
+            moon.Transform = getMoonTransform(elapsedTime, earth.Transform);
+            moon.render();
+
+            axisRotation += AXIS_ROTATION_SPEED * elapsedTime;
+            earthAxisRotation += EARTH_AXIS_ROTATION_SPEED * elapsedTime;
+            earthOrbitRotation += EARTH_ORBIT_SPEED * elapsedTime;
+            moonOrbitRotation += MOON_ORBIT_SPEED * elapsedTime;
+
+            //Limpiamos todas las transformaciones con la Matrix identidad
+            d3dDevice.Transform.World = Matrix.Identity;
+       
             //RENDER
             //Siempre primero hacer todos los cálculos de lógica e input y luego al final dibujar todo (ciclo update-render)
-            skyBox.render();
+            //skyBox.render();
             box.render();
             spaceShip.render();
+            text1.render();
         }
+
+
+
+        private Matrix getSunTransform(float elapsedTime)
+        {
+            Matrix scale = Matrix.Scaling(SUN_SCALE);
+            Matrix yRot = Matrix.RotationY(axisRotation);
+
+            return scale * yRot;
+        }
+
+        private Matrix getEarthTransform(float elapsedTime)
+        {
+            Matrix scale = Matrix.Scaling(EARTH_SCALE);
+            Matrix yRot = Matrix.RotationY(earthAxisRotation);
+            Matrix sunOffset = Matrix.Translation(EARTH_ORBIT_OFFSET, 0, 0);
+            Matrix earthOrbit = Matrix.RotationY(earthOrbitRotation);
+
+            return scale * yRot * sunOffset * earthOrbit;
+        }
+
+        private Matrix getMoonTransform(float elapsedTime, Matrix earthTransform)
+        {
+            Matrix scale = Matrix.Scaling(MOON_SCALE);
+            Matrix yRot = Matrix.RotationY(axisRotation);
+            Matrix earthOffset = Matrix.Translation(MOON_ORBIT_OFFSET, 0, 0);
+            Matrix moonOrbit = Matrix.RotationY(moonOrbitRotation);
+
+            return scale * yRot * earthOffset * moonOrbit * earthTransform;
+        }
+
 
 
 
@@ -233,18 +418,18 @@ namespace AlumnoEjemplos.NaveEspacial
             skyBox.dispose();
             box.dispose();
             spaceShip.dispose();
+            text1.dispose();
+            sun.dispose();
+            moon.dispose();
+            earth.dispose();
         }
 
-        public void Subiendo(int unaDir, float deltaTime)
+        public void Subiendo(int unaDir, float aceleracion, float deltaTime)
         {
-            if (subiendoDir != 0)
+            if (anguloSubida < Geometry.DegreeToRadian(30) && anguloSubida > Geometry.DegreeToRadian(-30)) 
             {
-                if (anguloSubida < Geometry.DegreeToRadian(30) * unaDir || anguloSubida > Geometry.DegreeToRadian(30) * unaDir) { anguloSubida += 0.1f * unaDir * deltaTime; spaceShip.rotateX(0.1f * unaDir * deltaTime); }
-            }
-            else
-            {
-                spaceShip.rotateX(-anguloSubida);
-                anguloSubida = 0;
+                anguloSubida += (-aceleracion/2) * unaDir * deltaTime; 
+                spaceShip.rotateX((-aceleracion/2) * unaDir * deltaTime); 
             }
         }
     }
