@@ -116,22 +116,22 @@ namespace AlumnoEjemplos.NaveEspacial
                 
                 //SKYBOX//
                 //Textura del Cielo
-              //  string texturesPath = GuiController.Instance.ExamplesMediaDir + "Texturas\\Quake\\SkyBox2\\";
+                string texturesPath = GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\";
 
                 //Crear SkyBox 
-             //   skyBox = new TgcSkyBox();
-            //    skyBox.Center = new Vector3(0, 0, 0);
-            //    skyBox.Size = new Vector3(3000, 3000, 3000);
+                skyBox = new TgcSkyBox();
+                skyBox.Center = new Vector3(0, 0, 0);
+                skyBox.Size = new Vector3(10000, 10000, 10000);
                 
                 //Configurar las texturas para cada una de las 6 caras
-            //    skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Up, texturesPath + "lun4_up.jpg");
-            //    skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Down, texturesPath + "lun4_dn.jpg");
-            //    skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Left, texturesPath + "lun4_lf.jpg");
-            //    skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Right, texturesPath + "lun4_rt.jpg");
-            //    skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Front, texturesPath + "lun4_bk.jpg");
-            //    skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Back, texturesPath + "lun4_ft.jpg");
+                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Up, texturesPath + "spaceBackTexture.jpg");
+                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Down, texturesPath + "spaceBackTexture.jpg");
+                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Left, texturesPath + "spaceBackTexture.jpg");
+                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Right, texturesPath + "spaceBackTexture.jpg");
+                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Front, texturesPath + "spaceBackTexture.jpg");
+                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Back, texturesPath + "spaceBackTexture.jpg");
 
-            //    skyBox.updateValues();
+                skyBox.updateValues();
 
                 
                 
@@ -143,7 +143,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
             //AGREGO UNA NAVE
             spaceShip = scene.Meshes[0];
-            Vector3 escala=new Vector3(0.5f, 0.5f, 0.5f);
+            Vector3 escala=new Vector3(0.05f, 0.05f, 0.05f); //en lugar de bajar la escala a todo, bajo a la nave y evito problemas de numeros gigantes
             spaceShip.Scale=(escala);
             
 
@@ -152,7 +152,7 @@ namespace AlumnoEjemplos.NaveEspacial
             GuiController.Instance.Modifiers.addFloat("currAccel", -15f, 15f, 0f);
             
             //lo que va incrementando la aceleracion
-            GuiController.Instance.Modifiers.addFloat("speedModifier", 0f, 2f, 0.3f);
+            GuiController.Instance.Modifiers.addFloat("speedModifier", 0f, 2f, 0.2f);
 
             //Para la Rotacion de la Caja a los costados (Float)
             GuiController.Instance.Modifiers.addFloat("rotationY", 0f, 2f, 0.2f);
@@ -174,11 +174,11 @@ namespace AlumnoEjemplos.NaveEspacial
             //Habilito la camara en 1era Persona
             GuiController.Instance.ThirdPersonCamera.Enable = true;
             //Configurar a quien sigue y a que distancia Altura y Lejania
-            GuiController.Instance.ThirdPersonCamera.setCamera(spaceShip.Position, 100, 200);
+            GuiController.Instance.ThirdPersonCamera.setCamera(spaceShip.Position, 5, 30);
 
             //seteo valor inicial de las variables del movimiento
             currentAccel = 0f;
-            maxSpeed = -2f; //valor temporal
+            maxSpeed = -0.8f; //valor temporal
             AngleZRotation = 0f;
             anguloSubida = 0f;
         }
@@ -372,7 +372,7 @@ namespace AlumnoEjemplos.NaveEspacial
        
             //RENDER
             //Siempre primero hacer todos los cálculos de lógica e input y luego al final dibujar todo (ciclo update-render)
-            //skyBox.render();
+            skyBox.render();
             box.render();
             spaceShip.render();
             text1.render();
