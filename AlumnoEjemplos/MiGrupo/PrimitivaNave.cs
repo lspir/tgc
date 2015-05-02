@@ -21,6 +21,7 @@ namespace AlumnoEjemplos.NaveEspacial
          readonly Vector3 SUN_SCALE = new Vector3(12, 12, 12);
         readonly Vector3 EARTH_SCALE = new Vector3(3, 3, 3);
         readonly Vector3 MOON_SCALE = new Vector3(0.5f, 0.5f, 0.5f);
+        readonly Vector3 SPACE_SCALE = new Vector3(200f, 200f, 200f);
 
         const float AXIS_ROTATION_SPEED = 0.1f;
         const float EARTH_AXIS_ROTATION_SPEED = 1f;
@@ -34,6 +35,8 @@ namespace AlumnoEjemplos.NaveEspacial
         TgcMesh earth;
         TgcMesh moon;
 
+        TgcMesh spaceSphere;
+
         float axisRotation = 0f;
         float earthAxisRotation = 0f;
         float earthOrbitRotation = 0f;
@@ -43,7 +46,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
         TgcBox box; //caja
         TgcMesh spaceShip; //nave
-        TgcSkyBox skyBox;  //cieloEnvolvente
+        //TgcSkyBox skyBox;  //cieloEnvolvente
         TgcText2d text1;    //textoExplicacion
         float currentAccel;
         float maxSpeed;
@@ -91,6 +94,10 @@ namespace AlumnoEjemplos.NaveEspacial
             moon = loader.loadSceneFromFile(sphere).Meshes[0];
             moon.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.ExamplesDir + "Transformations\\SistemaSolar\\MoonTexture.jpg") });
 
+            spaceSphere = loader.loadSceneFromFile(sphere).Meshes[0];
+            spaceSphere.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\spaceBackTexture.jpg") });
+            spaceSphere.Scale = SPACE_SCALE;
+
 
             //Deshabilitamos el manejo automático de Transformaciones de TgcMesh, para poder manipularlas en forma customizada
             sun.AutoTransformEnable = false;
@@ -119,19 +126,19 @@ namespace AlumnoEjemplos.NaveEspacial
                 string texturesPath = GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\";
 
                 //Crear SkyBox 
-                skyBox = new TgcSkyBox();
-                skyBox.Center = new Vector3(0, 0, 0);
-                skyBox.Size = new Vector3(10000, 10000, 10000);
+                //skyBox = new TgcSkyBox();
+                //skyBox.Center = new Vector3(0, 0, 0);
+                //skyBox.Size = new Vector3(10000, 10000, 10000);
                 
                 //Configurar las texturas para cada una de las 6 caras
-                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Up, texturesPath + "spaceBackTexture.jpg");
-                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Down, texturesPath + "spaceBackTexture.jpg");
-                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Left, texturesPath + "spaceBackTexture.jpg");
-                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Right, texturesPath + "spaceBackTexture.jpg");
-                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Front, texturesPath + "spaceBackTexture.jpg");
-                skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Back, texturesPath + "spaceBackTexture.jpg");
+                //skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Up, texturesPath + "spaceBackTexture.jpg");
+                //skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Down, texturesPath + "spaceBackTexture.jpg");
+                //skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Left, texturesPath + "spaceBackTexture.jpg");
+                //skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Right, texturesPath + "spaceBackTexture.jpg");
+                //skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Front, texturesPath + "spaceBackTexture.jpg");
+                //skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Back, texturesPath + "spaceBackTexture.jpg");
 
-                skyBox.updateValues();
+                //skyBox.updateValues();
 
                 
                 
@@ -200,6 +207,8 @@ namespace AlumnoEjemplos.NaveEspacial
             float rotationZ = (float)GuiController.Instance.Modifiers["rotationZ"];
             float angRetorno = (float)GuiController.Instance.Modifiers["angRetorno"];
             float hyperSpeed = (float)GuiController.Instance.Modifiers["hyperSpeed"];
+
+            spaceSphere.render(); //la rendereo primero porque es el fondo
 
 
             ///////////////INPUT TECLADO//////////////////
@@ -367,12 +376,14 @@ namespace AlumnoEjemplos.NaveEspacial
             earthOrbitRotation += EARTH_ORBIT_SPEED * elapsedTime;
             moonOrbitRotation += MOON_ORBIT_SPEED * elapsedTime;
 
+            spaceSphere.Position = spaceShip.Position;
+
             //Limpiamos todas las transformaciones con la Matrix identidad
             d3dDevice.Transform.World = Matrix.Identity;
        
             //RENDER
             //Siempre primero hacer todos los cálculos de lógica e input y luego al final dibujar todo (ciclo update-render)
-            skyBox.render();
+            //skyBox.render();
             box.render();
             spaceShip.render();
             text1.render();
@@ -415,13 +426,14 @@ namespace AlumnoEjemplos.NaveEspacial
         // Hacer dispose() de todos los objetos creados.
         public override void close()
         {
-            skyBox.dispose();
+            //skyBox.dispose();
             box.dispose();
             spaceShip.dispose();
             text1.dispose();
             sun.dispose();
             moon.dispose();
             earth.dispose();
+            spaceSphere.dispose();
         }
 
         public void Subiendo(int unaDir, float aceleracion, float deltaTime)
