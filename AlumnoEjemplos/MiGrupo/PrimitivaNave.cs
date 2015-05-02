@@ -42,7 +42,9 @@ namespace AlumnoEjemplos.NaveEspacial
         float earthOrbitRotation = 0f;
         float moonOrbitRotation = 0f;
 
-
+        //shooting related stuff
+        List<Bullet> Disparos;
+        float timeSinceLastShot;
 
         TgcBox box; //caja
         TgcMesh spaceShip; //nave
@@ -79,6 +81,9 @@ namespace AlumnoEjemplos.NaveEspacial
             //GuiController.Instance: acceso principal a todas las herramientas del Framework
             //Device de DirectX para crear primitivas
             Device d3dDevice = GuiController.Instance.D3dDevice;
+
+            //inicio la lista
+            Disparos = new List<Bullet>();
 
             //Cargo el loader de Scenes y los Meshes
             TgcSceneLoader loader = new TgcSceneLoader();
@@ -188,6 +193,8 @@ namespace AlumnoEjemplos.NaveEspacial
             maxSpeed = -0.8f; //valor temporal
             AngleZRotation = 0f;
             anguloSubida = 0f;
+
+            timeSinceLastShot = 10f;
         }
 
 
@@ -210,8 +217,44 @@ namespace AlumnoEjemplos.NaveEspacial
 
             spaceSphere.render(); //la rendereo primero porque es el fondo
 
+            //cada frame voy actualizando el tiempo entre disparos
+            timeSinceLastShot += elapsedTime;
 
             ///////////////INPUT TECLADO//////////////////
+
+            //Tecla E, disparo
+            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.E) && timeSinceLastShot > 0.5f) //reviso tecla y el intervalo de disparo
+            {
+                Bullet disparo;
+                disparo = new Bullet();
+                TgcBox disparoModel;
+                disparoModel = TgcBox.fromSize(new Vector3(1, 1, 4), Color.Pink);
+                disparoModel.Position = spaceShip.Position;
+                disparoModel.Rotation = spaceShip.Rotation;
+                disparo.renderModel = disparoModel;
+                disparo.timeAlive = 0f;
+                Disparos.Add(disparo);
+                timeSinceLastShot = 0f;
+            }
+
+            for (int i = 0; i < Disparos.Count; i += 1)
+            {
+                Disparos[i].renderModel.moveOrientedY(-1f);
+                Disparos[i].renderModel.render();
+                float timetoAdd = Disparos[i].timeAlive + elapsedTime;
+                Bullet disparo2;
+                disparo2 = new Bullet();
+                disparo2.renderModel = Disparos[i].renderModel;
+                disparo2.timeAlive = Disparos[i].timeAlive;
+                Disparos[i] = disparo2;
+
+                if (Disparos[i].timeAlive > 0.5f) //si la bala hace Xs que esta en el juego, ya viajo lejos y no me interesa, la destruyo
+                {
+                    Disparos[i].renderModel.dispose();
+                    Disparos.Remove(Disparos[i]);
+                }
+            }
+
             //Tecla W apretada (si además tiene Space, va a hiperVelocidad
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W))
             {
@@ -445,4 +488,15 @@ namespace AlumnoEjemplos.NaveEspacial
             }
         }
     }
+
+    public struct Bullet
+    {
+        public TgcBox renderModel;
+        public float timeAlive { get; set; }
+    }
+
+    
 }
+
+
+
