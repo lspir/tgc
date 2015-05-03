@@ -245,10 +245,10 @@ namespace AlumnoEjemplos.NaveEspacial
                 Bullet disparo2;
                 disparo2 = new Bullet();
                 disparo2.renderModel = Disparos[i].renderModel;
-                disparo2.timeAlive = Disparos[i].timeAlive;
+                disparo2.timeAlive = timetoAdd;
                 Disparos[i] = disparo2;
 
-                if (Disparos[i].timeAlive > 0.5f) //si la bala hace Xs que esta en el juego, ya viajo lejos y no me interesa, la destruyo
+                if (Disparos[i].timeAlive > 0.5f) //si la bala hace X segundos que esta en el juego, ya viajo lejos y no me interesa, la destruyo
                 {
                     Disparos[i].renderModel.dispose();
                     Disparos.Remove(Disparos[i]);
