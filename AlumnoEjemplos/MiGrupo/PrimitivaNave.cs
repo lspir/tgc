@@ -119,14 +119,22 @@ namespace AlumnoEjemplos.NaveEspacial
 
             //Para colisiones
             Colisionables.Clear();
-            foreach (TgcMesh unMesh in scene.Meshes)
+            sun.BoundingBox.transform(getSunTransform(0f));
+            earth.BoundingBox.transform(getEarthTransform(0f));
+            moon.BoundingBox.transform(getMoonTransform(0f, getEarthTransform(0f)));
+            Colisionables.Add(sun.BoundingBox);
+            Colisionables.Add(moon.BoundingBox);
+            Colisionables.Add(earth.BoundingBox);
+            //Colisionables.Add(box.BoundingBox);
+  /*          foreach (TgcMesh unMesh in scene.Meshes)
             {
                 if (unMesh == spaceShip) { }
                 else
                 {
-                    Colisionables.Add(unMesh.BoundingBox);
+                    //Colisionables.Add(unMesh.BoundingBox);
                 }
             }
+   */
 
 
             //TEXTO de explicacion
@@ -345,14 +353,6 @@ namespace AlumnoEjemplos.NaveEspacial
             spaceShip.rotateY(AngleZRotation * elapsedTime);
             GuiController.Instance.ThirdPersonCamera.rotateY(AngleZRotation * elapsedTime);
 
-            //checkeo colisiones
-            bool collide = false;
-            foreach(TgcBoundingBox col in Colisionables) 
-            {
-                collide = TgcCollisionUtils.testObbAABB(obbSpaceShip, col);
-            }
-            if (collide) { spaceShip.Position = lastPos; }
-
             //Tecla D apretada
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.D))
             {
@@ -430,16 +430,29 @@ namespace AlumnoEjemplos.NaveEspacial
             obbSpaceShip.setRotation(spaceShip.Rotation);
             obbSpaceShip.render();
 
+
+
+            //checkeo colisiones
+            bool collide = false;
+            foreach (TgcBoundingBox col in Colisionables)
+            {
+                collide = TgcCollisionUtils.testObbAABB(obbSpaceShip, col);
+            }
+            if (collide) { spaceShip.Position = lastPos; obbSpaceShip.move(spaceShip.Position - obbSpaceShip.Position); }
+
              //Actualizar transformacion y renderizar el sol
             sun.Transform = getSunTransform(elapsedTime);
+            sun.BoundingBox.transform(sun.Transform);
             sun.render();
 
             //Actualizar transformacion y renderizar la tierra
             earth.Transform = getEarthTransform(elapsedTime);
+            earth.BoundingBox.transform(earth.Transform);
             earth.render();
 
             //Actualizar transformacion y renderizar la luna
             moon.Transform = getMoonTransform(elapsedTime, earth.Transform);
+            moon.BoundingBox.transform(moon.Transform);
             moon.render();
 
             axisRotation += AXIS_ROTATION_SPEED * elapsedTime;
@@ -448,6 +461,10 @@ namespace AlumnoEjemplos.NaveEspacial
             moonOrbitRotation += MOON_ORBIT_SPEED * elapsedTime;
 
             spaceSphere.Position = spaceShip.Position;
+
+            sun.BoundingBox.render();
+            moon.BoundingBox.render();
+            earth.BoundingBox.render();
 
             //Limpiamos todas las transformaciones con la Matrix identidad
             d3dDevice.Transform.World = Matrix.Identity;
