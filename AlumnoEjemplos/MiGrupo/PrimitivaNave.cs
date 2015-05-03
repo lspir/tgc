@@ -48,6 +48,9 @@ namespace AlumnoEjemplos.NaveEspacial
 
         TgcBox box; //caja
         TgcMesh spaceShip; //nave
+        TgcObb obbSpaceShip; //para la colision de la nave
+        List<TgcBoundingBox> Colisionables = new List<TgcBoundingBox>();
+        
         //TgcSkyBox skyBox;  //cieloEnvolvente
         TgcText2d text1;    //textoExplicacion
         float currentAccel;
@@ -114,8 +117,16 @@ namespace AlumnoEjemplos.NaveEspacial
             GuiController.Instance.BackgroundColor = Color.Black;
 
 
-
-
+            //Para colisiones
+            Colisionables.Clear();
+            foreach (TgcMesh unMesh in scene.Meshes)
+            {
+                if (unMesh == spaceShip) { }
+                else
+                {
+                    Colisionables.Add(unMesh.BoundingBox);
+                }
+            }
 
 
             //TEXTO de explicacion
@@ -157,6 +168,8 @@ namespace AlumnoEjemplos.NaveEspacial
             spaceShip = scene.Meshes[0];
             Vector3 escala=new Vector3(0.05f, 0.05f, 0.05f); //en lugar de bajar la escala a todo, bajo a la nave y evito problemas de numeros gigantes
             spaceShip.Scale=(escala);
+            obbSpaceShip = TgcObb.computeFromAABB(spaceShip.BoundingBox);
+            spaceShip.Position = new Vector3(500, 0, 200); //pos inicial
             
 
             ///////////////MODIFIERS//////////////////
@@ -325,11 +338,20 @@ namespace AlumnoEjemplos.NaveEspacial
             //actualizo el display de la aceleracion
             currAccel = currentAccel;
 
-            //muevo la nave en base a la aceleracion y rotacion que se le da
+            //muevo la nave en base a la aceleracion y rotacion que se le da, previamente guardando la pos anterior
+            Vector3 lastPos = spaceShip.Position;
+
             spaceShip.moveOrientedY(currentAccel);
             spaceShip.rotateY(AngleZRotation * elapsedTime);
             GuiController.Instance.ThirdPersonCamera.rotateY(AngleZRotation * elapsedTime);
 
+            //checkeo colisiones
+            bool collide = false;
+            foreach(TgcBoundingBox col in Colisionables) 
+            {
+                collide = TgcCollisionUtils.testObbAABB(obbSpaceShip, col);
+            }
+            if (collide) { spaceShip.Position = lastPos; }
 
             //Tecla D apretada
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.D))
@@ -402,6 +424,12 @@ namespace AlumnoEjemplos.NaveEspacial
 
             //Hacer que la cámara en 3ra persona se ajuste a la nueva posición del objeto
             GuiController.Instance.ThirdPersonCamera.Target = spaceShip.Position;
+
+            //actualizo el obb
+            obbSpaceShip.move(spaceShip.Position - obbSpaceShip.Position);
+            obbSpaceShip.setRotation(spaceShip.Rotation);
+            obbSpaceShip.render();
+
              //Actualizar transformacion y renderizar el sol
             sun.Transform = getSunTransform(elapsedTime);
             sun.render();
