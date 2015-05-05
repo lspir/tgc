@@ -18,46 +18,63 @@ namespace AlumnoEjemplos.NaveEspacial
     public class NaveEspacial : TgcExample
     {
 
-         readonly Vector3 SUN_SCALE = new Vector3(12, 12, 12);
+        readonly Vector3 SUN_SCALE = new Vector3(12, 12, 12);
+        readonly Vector3 VENUS_SCALE = new Vector3(2.5f, 2.5f, 2.5f);
         readonly Vector3 EARTH_SCALE = new Vector3(3, 3, 3);
         readonly Vector3 MOON_SCALE = new Vector3(0.5f, 0.5f, 0.5f);
-        readonly Vector3 SPACE_SCALE = new Vector3(200f, 200f, 200f);
+        readonly Vector3 JUPITER_SCALE = new Vector3(5, 5, 5);
+        readonly Vector3 NEPTUNE_SCALE = new Vector3(3.5f, 3.5f, 3.5f);
+        readonly Vector3 SPACE_SCALE = new Vector3(200, 200, 200);
 
         const float AXIS_ROTATION_SPEED = 0.1f;
         const float EARTH_AXIS_ROTATION_SPEED = 1f;
+        const float VENUS_ORBIT_SPEED = 0.15f;
         const float EARTH_ORBIT_SPEED = 0.2f;
         const float MOON_ORBIT_SPEED = 1f;
+        const float JUPITER_ORBIT_SPEED = 0.08f;
+        const float NEPTUNE_ORBIT_SPEED = 0.05f;
 
-        const float EARTH_ORBIT_OFFSET = 700;
-        const float MOON_ORBIT_OFFSET = 80;
+        const float VENUS_ORBIT_OFFSET = 600;
+        const float EARTH_ORBIT_OFFSET = 1000;
+        const float MOON_ORBIT_OFFSET = 90;
+        const float JUPITER_ORBIT_OFFSET = 1500;
+        const float NEPTUNE_ORBIT_OFFSET = 1900;
 
         TgcMesh sun;
+        TgcMesh venus;
         TgcMesh earth;
         TgcMesh moon;
+        TgcMesh jupiter;
+        TgcMesh neptune;
 
         TgcMesh spaceSphere;
 
         float axisRotation = 0f;
         float earthAxisRotation = 0f;
+        float venusOrbitRotation = 0f;
         float earthOrbitRotation = 0f;
         float moonOrbitRotation = 0f;
+        float jupiterOrbitRotation = 0f;
+        float neptuneOrbitRotation = 0f;
 
         //shooting related stuff
         List<Bullet> Disparos;
         float timeSinceLastShot;
 
-        TgcBox box; //caja
+
         TgcMesh spaceShip; //nave
         TgcObb obbSpaceShip; //para la colision de la nave
         List<TgcBoundingBox> Colisionables = new List<TgcBoundingBox>();
-        
-        //TgcSkyBox skyBox;  //cieloEnvolvente
+
+
         TgcText2d text1;    //textoExplicacion
-        float currentAccel;
+        TgcSprite spriteLife;   //barra de vida
+        TgcSprite spriteNitro; //barra de nitro
+        float currentSpeed;
         float maxSpeed;
         float AngleZRotation;
         float anguloSubida;
-        
+
 
         public override string getCategory()
         {
@@ -66,7 +83,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
         public override string getName()
         {
-            return "Grupo 00";
+            return "Grupo 01";
         }
 
         public override string getDescription()
@@ -79,7 +96,7 @@ namespace AlumnoEjemplos.NaveEspacial
         // Método que se llama una sola vez,  al principio cuando se ejecuta el ejemplo.
         // Escribir aquí todo el código de inicialización: cargar modelos, texturas, modifiers, uservars, etc.
         public override void init()
-        {    
+        {
 
             //GuiController.Instance: acceso principal a todas las herramientas del Framework
             //Device de DirectX para crear primitivas
@@ -94,13 +111,22 @@ namespace AlumnoEjemplos.NaveEspacial
 
             string sphere = GuiController.Instance.ExamplesMediaDir + "ModelosTgc\\Sphere\\Sphere-TgcScene.xml";
             sun = loader.loadSceneFromFile(sphere).Meshes[0];
-            sun.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.ExamplesDir + "Transformations\\SistemaSolar\\SunTexture.jpg") });
+            sun.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\SunTexture.jpg") });
+
+            venus = loader.loadSceneFromFile(sphere).Meshes[0];
+            venus.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\VenusTexture.jpg") });
 
             earth = loader.loadSceneFromFile(sphere).Meshes[0];
-            earth.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.ExamplesDir + "Transformations\\SistemaSolar\\EarthTexture.jpg") });
+            earth.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\EarthTexture.jpg") });
 
             moon = loader.loadSceneFromFile(sphere).Meshes[0];
-            moon.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.ExamplesDir + "Transformations\\SistemaSolar\\MoonTexture.jpg") });
+            moon.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\MoonTexture.jpg") });
+
+            jupiter = loader.loadSceneFromFile(sphere).Meshes[0];
+            jupiter.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\JupiterTexture.jpg") });
+
+            neptune = loader.loadSceneFromFile(sphere).Meshes[0];
+            neptune.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\NeptuneTexture.jpg") });
 
             spaceSphere = loader.loadSceneFromFile(sphere).Meshes[0];
             spaceSphere.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\spaceBackTexture.jpg") });
@@ -109,89 +135,84 @@ namespace AlumnoEjemplos.NaveEspacial
 
             //Deshabilitamos el manejo automático de Transformaciones de TgcMesh, para poder manipularlas en forma customizada
             sun.AutoTransformEnable = false;
+            venus.AutoTransformEnable = false;
             earth.AutoTransformEnable = false;
             moon.AutoTransformEnable = false;
+            jupiter.AutoTransformEnable = false;
+            neptune.AutoTransformEnable = false;
 
 
             //Color de fondo
             GuiController.Instance.BackgroundColor = Color.Black;
 
+            //Crear Sprites
+            spriteLife = new TgcSprite();
+            spriteLife.Texture = TgcTexture.createTexture(GuiController.Instance.AlumnoEjemplosMediaDir + "\\Texturas\\LifeBar.png");
+            spriteLife.Scaling = new Vector2(0.3f, -0.5f);
+            spriteNitro = new TgcSprite();
+            spriteNitro.Texture = TgcTexture.createTexture(GuiController.Instance.AlumnoEjemplosMediaDir + "\\Texturas\\NitroBar.png");
+            spriteNitro.Scaling = new Vector2(0.1f, -0.3f);
+            //Ubicarlos en pantalla
+            Size screenSize = GuiController.Instance.Panel3d.Size;
+            spriteLife.Position = new Vector2(FastMath.Max(screenSize.Width / 11 - spriteLife.Texture.Size.Width, 0), FastMath.Max(screenSize.Height - screenSize.Height / 18, 0));
+            spriteNitro.Position = new Vector2(FastMath.Max(screenSize.Width / 12 - spriteNitro.Texture.Size.Width, 0), FastMath.Max(screenSize.Height - screenSize.Height / 18, 0));
+
 
             //Para colisiones
             Colisionables.Clear();
-            sun.BoundingBox.transform(getSunTransform(0f));
+            /*sun.BoundingBox.transform(getSunTransform(0f));
+            venus.BoundingBox.transform(getVenusTransform(0f));
             earth.BoundingBox.transform(getEarthTransform(0f));
             moon.BoundingBox.transform(getMoonTransform(0f, getEarthTransform(0f)));
+            jupiter.BoundingBox.transform(getJuputerTransform(0f));
+            neptune.BoundingBox.transform(getNeptuneTransform(0f));*/
             Colisionables.Add(sun.BoundingBox);
-            Colisionables.Add(moon.BoundingBox);
+            Colisionables.Add(venus.BoundingBox);
             Colisionables.Add(earth.BoundingBox);
-            //Colisionables.Add(box.BoundingBox);
-  /*          foreach (TgcMesh unMesh in scene.Meshes)
-            {
-                if (unMesh == spaceShip) { }
-                else
-                {
-                    //Colisionables.Add(unMesh.BoundingBox);
-                }
-            }
-   */
+            Colisionables.Add(moon.BoundingBox);
+            Colisionables.Add(jupiter.BoundingBox);
+            Colisionables.Add(neptune.BoundingBox);
+            /*          foreach (TgcMesh unMesh in scene.Meshes)
+                      {
+                          if (unMesh == spaceShip) { }
+                          else
+                          {
+                              //Colisionables.Add(unMesh.BoundingBox);
+                          }
+                      }
+             */
 
 
             //TEXTO de explicacion
             text1 = new TgcText2d();
-            text1.Text = "Aceleracion: W, Freno: S                       RotarHorizontal: A y D                         Subir: Shift, Bajar: Ctrl                         HiperVelocidad: Space";
+            text1.Text = "Aceleracion: W, Freno: S                       RotarHorizontal: A y D                         Subir: Shift, Bajar: Ctrl                         HiperVelocidad: Space                             Disparos: ClickIzq";
             text1.Align = TgcText2d.TextAlign.RIGHT;
             text1.Position = new Point(50, 50);
             text1.Size = new Size(300, 100);
             text1.Color = Color.Gold;
-                
-                //SKYBOX//
-                //Textura del Cielo
-                string texturesPath = GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\";
 
-                //Crear SkyBox 
-                //skyBox = new TgcSkyBox();
-                //skyBox.Center = new Vector3(0, 0, 0);
-                //skyBox.Size = new Vector3(10000, 10000, 10000);
-                
-                //Configurar las texturas para cada una de las 6 caras
-                //skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Up, texturesPath + "spaceBackTexture.jpg");
-                //skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Down, texturesPath + "spaceBackTexture.jpg");
-                //skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Left, texturesPath + "spaceBackTexture.jpg");
-                //skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Right, texturesPath + "spaceBackTexture.jpg");
-                //skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Front, texturesPath + "spaceBackTexture.jpg");
-                //skyBox.setFaceTexture(TgcSkyBox.SkyFaces.Back, texturesPath + "spaceBackTexture.jpg");
 
-                //skyBox.updateValues();
-
-                
-                
-            //AGREGO UNA CAJA de METAL
-            Vector3 center = new Vector3(0, 0, 0);
-            Vector3 size = new Vector3(5, 5, 5);
-            TgcTexture texture = TgcTexture.createTexture(GuiController.Instance.ExamplesMediaDir + "MeshCreator\\Textures\\Metal\\cajaMetal.jpg");
-            box = TgcBox.fromSize(center, size, texture);
 
             //AGREGO UNA NAVE
             spaceShip = scene.Meshes[0];
-            Vector3 escala=new Vector3(0.05f, 0.05f, 0.05f); //en lugar de bajar la escala a todo, bajo a la nave y evito problemas de numeros gigantes
-            spaceShip.Scale=(escala);
+            Vector3 escala = new Vector3(0.05f, 0.05f, 0.05f); //en lugar de bajar la escala a todo, bajo a la nave y evito problemas de numeros gigantes
+            spaceShip.Scale = (escala);
             obbSpaceShip = TgcObb.computeFromAABB(spaceShip.BoundingBox);
             spaceShip.Position = new Vector3(500, 0, 200); //pos inicial
-            
+
 
             ///////////////MODIFIERS//////////////////
-            //velocidad de aceleracion de la nave
-            GuiController.Instance.Modifiers.addFloat("currAccel", -15f, 15f, 0f);
-            
             //lo que va incrementando la aceleracion
-            GuiController.Instance.Modifiers.addFloat("speedModifier", 0f, 2f, 0.2f);
+            GuiController.Instance.Modifiers.addFloat("accel", 0f, 2f, 0.2f);
+
+            //lo que va incrementando la aceleracion
+            GuiController.Instance.Modifiers.addFloat("breaks", 0f, 5f, 0.5f);
 
             //Para la Rotacion de la Caja a los costados (Float)
             GuiController.Instance.Modifiers.addFloat("rotationY", 0f, 2f, 0.2f);
 
             //Para la Rotacion de la Caja arriba y abajo (Float)
-            GuiController.Instance.Modifiers.addFloat("rotationX", 0f, 10f, 1f);
+            GuiController.Instance.Modifiers.addFloat("rotationX", 0f, 10f, 2f);
 
             //Para la Rotacion de la Caja como barrelRoll (Float)
             GuiController.Instance.Modifiers.addFloat("rotationZ", 0f, 5f, 1.5f);
@@ -210,16 +231,16 @@ namespace AlumnoEjemplos.NaveEspacial
             GuiController.Instance.ThirdPersonCamera.setCamera(spaceShip.Position, 5, 30);
 
             //seteo valor inicial de las variables del movimiento
-            currentAccel = 0f;
-            maxSpeed = -0.8f; //valor temporal
-            AngleZRotation = 0f;
-            anguloSubida = 0f;
+            currentSpeed = 0f;      
+            maxSpeed = 0.8f;       //valor temporal
+            AngleZRotation = 0f;    //para la rotacion de la nave (izq y der)
+            anguloSubida = 0f;      //para la rotacion de la nave (arriba y abajo)
 
             timeSinceLastShot = 10f;
         }
 
 
-        
+
         // Método que se llama cada vez que hay que refrescar la pantalla.
         // Escribir aquí todo el código referido al renderizado.
         public override void render(float elapsedTime)
@@ -228,8 +249,8 @@ namespace AlumnoEjemplos.NaveEspacial
             Device d3dDevice = GuiController.Instance.D3dDevice;
 
             //Obtener valores de Modifiers
-            float currAccel = (float)GuiController.Instance.Modifiers["currAccel"];
-            float speed = (float)GuiController.Instance.Modifiers["speedModifier"];
+            float accel = (float)GuiController.Instance.Modifiers["accel"];
+            float breaks = (float)GuiController.Instance.Modifiers["breaks"];
             float rotationY = (float)GuiController.Instance.Modifiers["rotationY"];
             float rotationX = (float)GuiController.Instance.Modifiers["rotationX"];
             float rotationZ = (float)GuiController.Instance.Modifiers["rotationZ"];
@@ -243,8 +264,8 @@ namespace AlumnoEjemplos.NaveEspacial
 
             ///////////////INPUT TECLADO//////////////////
 
-            //Tecla E, disparo
-            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.E) && timeSinceLastShot > 0.5f) //reviso tecla y el intervalo de disparo
+            //Boton Izq, disparo
+            if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_LEFT) && timeSinceLastShot > 0.5f) //reviso tecla y el intervalo de disparo
             {
                 Bullet disparo;
                 disparo = new Bullet();
@@ -276,16 +297,16 @@ namespace AlumnoEjemplos.NaveEspacial
                 }
             }
 
-            //Tecla W apretada (si además tiene Space, va a hiperVelocidad
+            //Tecla W apretada (si además tiene Space, va a hiperVelocidad)
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W))
             {
                 //esto hace que si esta llendo en reversa, baje la velocidad a 0 mucho mas rapido, y luego acelere normal, y si se presiona la BarraEspaciadora acelere más rapido
-                if (currentAccel > 0)
-                { currentAccel -= 2.5f * speed * elapsedTime; }
-                else if (currentAccel <= 0 && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
-                { currentAccel -= speed * elapsedTime; }
-                else if (currentAccel <= 0 && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
-                { currentAccel -= hyperSpeed * speed * elapsedTime; }
+                if (currentSpeed < 0)
+                { currentSpeed += 5 * breaks * accel * elapsedTime; }
+                else if (currentSpeed >= 0 && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
+                { currentSpeed += accel * elapsedTime; }
+                else if (currentSpeed >= 0 && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
+                { currentSpeed += hyperSpeed * accel * elapsedTime; }
 
                 //Para hacer que vuelva a la posicion original a medida que acelera
                 if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.D) && AngleZRotation > 0)
@@ -300,28 +321,28 @@ namespace AlumnoEjemplos.NaveEspacial
                 }
 
                 //limito la velocidad maxima
-                if (currentAccel < maxSpeed && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
-                { currentAccel = maxSpeed; }
-                else if (currentAccel < maxSpeed * hyperSpeed && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
-                { currentAccel = maxSpeed * hyperSpeed; }
+                if (currentSpeed > maxSpeed && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
+                { currentSpeed = maxSpeed; }
+                else if (currentSpeed > (maxSpeed * hyperSpeed) && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
+                { currentSpeed = maxSpeed * hyperSpeed; }
 
             }
 
             //DESACELERACION y vuelta a la posicion original (horizonte)//
             if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W) && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.S))
             {
-                if (currentAccel < 0) { currentAccel += 0.5f * speed * elapsedTime; }
-                else { currentAccel -= 1.5f * speed * elapsedTime; } //esto hace que si no esta acelerando baje la velocidad a 0 (para reversa es mas rapido)
+                if (currentSpeed > 0) { currentSpeed -= breaks * accel * elapsedTime; }
+                else { currentSpeed += 2 * breaks * accel * elapsedTime; } //esto hace que si no esta acelerando baje la velocidad a 0 (para reversa es mas rapido)
             }
             if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.D) && AngleZRotation > 0)
             {
-                spaceShip.rotateZ(-rotationZ * 0.2f * elapsedTime); //rota barrelRoll en Z hacia la izq
-                AngleZRotation -= (rotationZ * 0.2f * elapsedTime);
+                spaceShip.rotateZ(-rotationZ * (angRetorno / 2) * elapsedTime); //rota barrelRoll en Z hacia la izq
+                AngleZRotation -= (rotationZ * (angRetorno / 2) * elapsedTime);
             }
             if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.A) && AngleZRotation < 0)
             {
-                spaceShip.rotateZ(rotationZ * 0.2f * elapsedTime); //rota barrelRoll en Z hacia la der
-                AngleZRotation += (rotationZ * 0.2f * elapsedTime);
+                spaceShip.rotateZ(rotationZ * (angRetorno/2) * elapsedTime); //rota barrelRoll en Z hacia la der
+                AngleZRotation += (rotationZ * (angRetorno / 2) * elapsedTime);
             }
             if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift) && anguloSubida > 0)
             {
@@ -337,89 +358,73 @@ namespace AlumnoEjemplos.NaveEspacial
             //Tecla S apretada (Freno)
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.S))
             {
-                if (currentAccel < 0) { currentAccel += 2 * speed * elapsedTime; }
-                else { currentAccel += speed * elapsedTime; }   //esto hace que frene rapido hasta 0 y luego acelere normal en reversa
+                if (currentSpeed > 0) { currentSpeed -= breaks * elapsedTime; }
+                else { currentSpeed -= accel/2 * elapsedTime; }   //esto hace que frene rapido hasta 0 y luego acelere a medias en reversa
 
-                if (currentAccel > -maxSpeed / 2) { currentAccel = -maxSpeed / 2; } //limito la velocidad maxima negativa
+                if (currentSpeed < -maxSpeed / 2) { currentSpeed = -maxSpeed / 2; } //limito la velocidad maxima negativa
             }
-
-            //actualizo el display de la aceleracion
-            currAccel = currentAccel;
-
-            //muevo la nave en base a la aceleracion y rotacion que se le da, previamente guardando la pos anterior
-            Vector3 lastPos = spaceShip.Position;
-
-            spaceShip.moveOrientedY(currentAccel);
-            spaceShip.rotateY(AngleZRotation * elapsedTime);
-            GuiController.Instance.ThirdPersonCamera.rotateY(AngleZRotation * elapsedTime);
 
             //Tecla D apretada
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.D))
             {
-                if (currentAccel <= 0 && AngleZRotation < 1.2)
+                if (currentSpeed >= 0 && AngleZRotation < 1.2)
                 {
-                    spaceShip.rotateZ(rotationZ * (-currAccel / 2) * elapsedTime); //rota barrelRoll en Z hacia la der
-                    AngleZRotation += (rotationZ * (-currAccel / 2) * elapsedTime);
+                    spaceShip.rotateZ(rotationZ * (currentSpeed / 2) * elapsedTime); //rota barrelRoll en Z hacia la der
+                    AngleZRotation += (rotationZ * (currentSpeed / 2) * elapsedTime);
                 }
             }
 
             //Tecla A apretada
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.A))
             {
-                if (currentAccel <= 0 && AngleZRotation > -1.2)
+                if (currentSpeed >= 0 && AngleZRotation > -1.2)
                 {
-                    spaceShip.rotateZ(-rotationZ * (-currAccel / 2) * elapsedTime); //rota barrelRoll en Z hacia la izq
-                    AngleZRotation -= (rotationZ * (-currAccel / 2) * elapsedTime);
+                    spaceShip.rotateZ(-rotationZ * (currentSpeed / 2) * elapsedTime); //rota barrelRoll en Z hacia la izq
+                    AngleZRotation -= (rotationZ * (currentSpeed / 2) * elapsedTime);
                 }
             }
 
             //Shift, quiero subir
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift))
             {
-                if (currentAccel <= 0)
+                if (currentSpeed >= 0)
                 {
-                    spaceShip.move(0, currAccel * -1f, 0);
-                    Subiendo(1, currAccel * rotationX, elapsedTime); //la direccion de la subida es negativa, la velocidad depende de la rotacion en X
+                    spaceShip.move(0, currentSpeed / 2, 0);
+                    Subiendo(1, currentSpeed * rotationX, elapsedTime); //la direccion de la subida es negativa, la velocidad depende de la rotacion en X
                 }
             }
 
             //Control, quiero bajar
             else if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl))
             {
-                if (currentAccel <= 0)
+                if (currentSpeed >= 0)
                 {
-                    spaceShip.move(0, currAccel, 0);
-                    Subiendo(-1, currAccel * rotationX, elapsedTime); //la direccion de la subida es negativa, la velocidad depende de la rotacion en X
+                    spaceShip.move(0, -currentSpeed / 2, 0);
+                    Subiendo(-1, currentSpeed * rotationX, elapsedTime); //la direccion de la subida es negativa, la velocidad depende de la rotacion en X
                 }
             }
 
-            /*
-                //Tecla Up apretada
-                if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Up))
-                {
-                    spaceShip.rotateX(rotationX * elapsedTime); //rota hacia la arriba en X
-                }
-
-                //Tecla Down apretada
-                if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Down))
-                {
-                    spaceShip.rotateX(-rotationX * elapsedTime); //rota hacia la abajo en X
-                }
-            */
-
-            //Tecla Right apretada
-            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Right))
+            //Tecla E apretada
+            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.E))
             {
                 spaceShip.rotateY(rotationY * elapsedTime); //rota hacia la izq en Y (sin inclinarse, rota aunque este detenido o marcha atras)
                 GuiController.Instance.ThirdPersonCamera.rotateY(rotationY * elapsedTime);
             }
 
-            //Tecla Left apretada
-            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Left))
+            //Tecla Q apretada
+            if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Q))
             {
                 spaceShip.rotateY(-rotationY * elapsedTime); //rota hacia la der en Y (sin inclinarse, rota aunque este detenido o marcha atras)
                 GuiController.Instance.ThirdPersonCamera.rotateY(-rotationY * elapsedTime);
             }
+
+
+            //muevo la nave en base a la aceleracion y rotacion que se le da, previamente guardando la pos anterior
+            Vector3 lastPos = spaceShip.Position;
+
+            spaceShip.moveOrientedY(-currentSpeed);
+            spaceShip.rotateY(AngleZRotation * elapsedTime);
+            GuiController.Instance.ThirdPersonCamera.rotateY(AngleZRotation * elapsedTime);
 
 
             //Hacer que la cámara en 3ra persona se ajuste a la nueva posición del objeto
@@ -431,7 +436,6 @@ namespace AlumnoEjemplos.NaveEspacial
             obbSpaceShip.render();
 
 
-
             //checkeo colisiones
             bool collide = false;
             foreach (TgcBoundingBox col in Colisionables)
@@ -440,45 +444,71 @@ namespace AlumnoEjemplos.NaveEspacial
             }
             if (collide) { spaceShip.Position = lastPos; obbSpaceShip.move(spaceShip.Position - obbSpaceShip.Position); }
 
-             //Actualizar transformacion y renderizar el sol
-            sun.Transform = getSunTransform(elapsedTime);
+            
+            //Actualizar transformaciones y renderizar planetas
+
+            //Sol
+            sun.Transform = getPlanetTransform(SUN_SCALE, axisRotation, 0, 0, Matrix.Identity);
             sun.BoundingBox.transform(sun.Transform);
             sun.render();
-
-            //Actualizar transformacion y renderizar la tierra
-            earth.Transform = getEarthTransform(elapsedTime);
+            //Venus
+            venus.Transform = getPlanetTransform(VENUS_SCALE, axisRotation, VENUS_ORBIT_OFFSET, venusOrbitRotation, Matrix.Identity);
+            venus.BoundingBox.transform(venus.Transform);
+            venus.render();
+            //Tierra
+            earth.Transform = getPlanetTransform(EARTH_SCALE, earthAxisRotation, EARTH_ORBIT_OFFSET, earthOrbitRotation, Matrix.Identity);
             earth.BoundingBox.transform(earth.Transform);
             earth.render();
-
-            //Actualizar transformacion y renderizar la luna
-            moon.Transform = getMoonTransform(elapsedTime, earth.Transform);
+            //Luna
+            moon.Transform = getPlanetTransform(MOON_SCALE, axisRotation, MOON_ORBIT_OFFSET, moonOrbitRotation, earth.Transform);
             moon.BoundingBox.transform(moon.Transform);
             moon.render();
+            //Jupiter
+            jupiter.Transform = getPlanetTransform(JUPITER_SCALE, axisRotation, JUPITER_ORBIT_OFFSET, jupiterOrbitRotation, Matrix.Identity);
+            jupiter.BoundingBox.transform(jupiter.Transform);
+            jupiter.render();
+            //Neptune
+            neptune.Transform = getPlanetTransform(NEPTUNE_SCALE, axisRotation, NEPTUNE_ORBIT_OFFSET, neptuneOrbitRotation, Matrix.Identity);
+            neptune.BoundingBox.transform(neptune.Transform);
+            neptune.render();
 
             axisRotation += AXIS_ROTATION_SPEED * elapsedTime;
+            venusOrbitRotation += VENUS_ORBIT_SPEED * elapsedTime;
             earthAxisRotation += EARTH_AXIS_ROTATION_SPEED * elapsedTime;
             earthOrbitRotation += EARTH_ORBIT_SPEED * elapsedTime;
             moonOrbitRotation += MOON_ORBIT_SPEED * elapsedTime;
+            jupiterOrbitRotation += JUPITER_ORBIT_SPEED * elapsedTime;
+            neptuneOrbitRotation += NEPTUNE_ORBIT_SPEED * elapsedTime;
 
             spaceSphere.Position = spaceShip.Position;
 
             sun.BoundingBox.render();
+            venus.BoundingBox.render();
             moon.BoundingBox.render();
             earth.BoundingBox.render();
+            jupiter.BoundingBox.render();
+            neptune.BoundingBox.render();
 
             //Limpiamos todas las transformaciones con la Matrix identidad
             d3dDevice.Transform.World = Matrix.Identity;
-       
+
             //RENDER
             //Siempre primero hacer todos los cálculos de lógica e input y luego al final dibujar todo (ciclo update-render)
-            //skyBox.render();
-            box.render();
             spaceShip.render();
             text1.render();
+
+
+            //Iniciar dibujado de todos los Sprites de la escena (en este caso es solo uno)
+            GuiController.Instance.Drawer2D.beginDrawSprite();
+            //Dibujar sprites
+            spriteLife.render();
+            spriteNitro.render();
+            //Finalizar el dibujado de Sprites
+            GuiController.Instance.Drawer2D.endDrawSprite();
+
         }
 
-
-
+/*
         private Matrix getSunTransform(float elapsedTime)
         {
             Matrix scale = Matrix.Scaling(SUN_SCALE);
@@ -486,6 +516,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
             return scale * yRot;
         }
+
 
         private Matrix getEarthTransform(float elapsedTime)
         {
@@ -506,6 +537,18 @@ namespace AlumnoEjemplos.NaveEspacial
 
             return scale * yRot * earthOffset * moonOrbit * earthTransform;
         }
+*/
+
+        //Para todos los planetas: Escala, RotacionTierra, OffsetOrbita, RotacionOrbita, MatrizDeQuienEsSatelite
+        private Matrix getPlanetTransform(Vector3 selfScale, float axisRot, float orbitOff, float orbitRot, Matrix satelite)
+        {
+            Matrix scale = Matrix.Scaling(selfScale);
+            Matrix yRot = Matrix.RotationY(axisRot);
+            Matrix planetOffset = Matrix.Translation(orbitOff, 0, 0);
+            Matrix planetOrbit = Matrix.RotationY(orbitRot);
+
+            return scale * yRot * planetOffset * planetOrbit * satelite;
+        }
 
 
 
@@ -514,22 +557,25 @@ namespace AlumnoEjemplos.NaveEspacial
         // Hacer dispose() de todos los objetos creados.
         public override void close()
         {
-            //skyBox.dispose();
-            box.dispose();
             spaceShip.dispose();
             text1.dispose();
             sun.dispose();
+            venus.dispose();
             moon.dispose();
             earth.dispose();
+            jupiter.dispose();
+            neptune.dispose();
+            spriteLife.dispose();
+            spriteNitro.dispose();
             spaceSphere.dispose();
         }
 
-        public void Subiendo(int unaDir, float aceleracion, float deltaTime)
+        public void Subiendo(int unaDir, float velocidad, float deltaTime)
         {
-            if (anguloSubida < Geometry.DegreeToRadian(30) && anguloSubida > Geometry.DegreeToRadian(-30)) 
+            if (anguloSubida < Geometry.DegreeToRadian(30) && anguloSubida > Geometry.DegreeToRadian(-30))
             {
-                anguloSubida += (-aceleracion/2) * unaDir * deltaTime; 
-                spaceShip.rotateX((-aceleracion/2) * unaDir * deltaTime); 
+                anguloSubida += (velocidad / 2) * unaDir * deltaTime;
+                spaceShip.rotateX((velocidad / 2) * unaDir * deltaTime);
             }
         }
     }
@@ -540,8 +586,5 @@ namespace AlumnoEjemplos.NaveEspacial
         public float timeAlive { get; set; }
     }
 
-    
+
 }
-
-
-
