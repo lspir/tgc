@@ -48,6 +48,7 @@ namespace AlumnoEjemplos.NaveEspacial
         TgcMesh neptune;
 
         TgcMesh spaceSphere;
+        Size screenSize;
 
         float axisRotation = 0f;
         float earthAxisRotation = 0f;
@@ -74,6 +75,25 @@ namespace AlumnoEjemplos.NaveEspacial
         float maxSpeed;
         float AngleZRotation;
         float anguloSubida;
+
+
+        //Sprites de Estrellas en HyperSpeed
+        List<TgcSprite> stars;
+        //El indice el sprite actual.
+        int currentStar;
+        float size;
+        float angle;
+
+        //La posicion
+        public Vector2 Position;
+
+        Vector2 spriteSize;
+        const int StarWidth = 4;
+        const int StarHeight = 4;
+        public static int Size = 4;
+
+        //La constante con la cantidad maxima de estrellas simultaneas.
+        const int starCount = 50;
 
 
         public override string getCategory()
@@ -153,10 +173,45 @@ namespace AlumnoEjemplos.NaveEspacial
             spriteNitro.Texture = TgcTexture.createTexture(GuiController.Instance.AlumnoEjemplosMediaDir + "\\Texturas\\NitroBar.png");
             spriteNitro.Scaling = new Vector2(0.1f, -0.3f);
             //Ubicarlos en pantalla
-            Size screenSize = GuiController.Instance.Panel3d.Size;
+            screenSize = GuiController.Instance.Panel3d.Size;
             spriteLife.Position = new Vector2(FastMath.Max(screenSize.Width / 11 - spriteLife.Texture.Size.Width, 0), FastMath.Max(screenSize.Height - screenSize.Height / 18, 0));
             spriteNitro.Position = new Vector2(FastMath.Max(screenSize.Width / 12 - spriteNitro.Texture.Size.Width, 0), FastMath.Max(screenSize.Height - screenSize.Height / 18, 0));
 
+
+            /*
+            //Creo la cantidad de estrellas simultaneas.
+            for (int i = 0; i < starCount; i++)
+            {
+                Stars star = new Stars();
+                star.Load(exampleDir, asteroidBitmap);
+
+                stars.Add(star);
+            }*/
+            //Creo la lista de Estrellas en HyperSpeed.
+            stars = new List<TgcSprite>();
+
+            spriteSize = new Vector2(StarWidth, StarHeight);
+            size = 1.0f;
+            angle = 0.0f;
+
+            TgcSprite newStar;
+            //Creo 64 sprites asignando distintos clipping rects a cada uno.
+            for (int i = 0; i < 8; i++)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    newStar = new TgcSprite();
+                    newStar.SrcRect = new Rectangle(j * (int)spriteSize.X, i * (int)spriteSize.Y, (int)spriteSize.X, (int)spriteSize.Y);
+                    newStar.Color = Color.WhiteSmoke;
+                    newStar.Texture = TgcTexture.createTexture(GuiController.Instance.AlumnoEjemplosMediaDir + "\\Texturas\\Star.png");
+                    newStar.Scaling = new Vector2(size, size);
+                    stars.Add(newStar);
+                }
+            }
+
+            currentStar = 0;
+
+            GenerateRandomPosition();
 
             //Para colisiones
             Colisionables.Clear();
@@ -444,6 +499,8 @@ namespace AlumnoEjemplos.NaveEspacial
             }
             if (collide) { spaceShip.Position = lastPos; obbSpaceShip.move(spaceShip.Position - obbSpaceShip.Position); }
 
+
+
             
             //Actualizar transformaciones y renderizar planetas
 
@@ -503,6 +560,30 @@ namespace AlumnoEjemplos.NaveEspacial
             //Dibujar sprites
             spriteLife.render();
             spriteNitro.render();
+            if(GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W) && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space)){
+                foreach(TgcSprite star in stars){
+                    //Chequeo si se escapa de la pantalla.
+                if (Position.X < -StarWidth || Position.Y < -StarHeight * 2 ||
+                    Position.X > screenSize.Width + StarWidth
+                    || Position.Y > screenSize.Height + StarHeight)
+                {
+                    GenerateRandomPosition();
+                }
+
+                    float speed = 500;
+
+                    Position.X += speed * elapsedTime * (float)Math.Cos(angle);
+                    Position.Y += speed * elapsedTime * (float)Math.Sin(angle);
+
+                    currentStar++;
+                    if (currentStar > 63) currentStar = 0;
+
+                stars[currentStar].Position = Position;
+                }
+
+                stars[currentStar].render();
+            }
+
             //Finalizar el dibujado de Sprites
             GuiController.Instance.Drawer2D.endDrawSprite();
 
@@ -568,6 +649,16 @@ namespace AlumnoEjemplos.NaveEspacial
             spriteLife.dispose();
             spriteNitro.dispose();
             spaceSphere.dispose();
+
+            //Dispose Stars
+            currentStar = 0;
+            foreach (TgcSprite star in stars)
+            {
+                currentStar++;
+                if (currentStar > 63) currentStar = 0;
+
+                stars[currentStar].dispose();
+            }
         }
 
         public void Subiendo(int unaDir, float velocidad, float deltaTime)
@@ -578,6 +669,29 @@ namespace AlumnoEjemplos.NaveEspacial
                 spaceShip.rotateX((velocidad / 2) * unaDir * deltaTime);
             }
         }
+
+        public void GenerateRandomPosition()
+        {
+            Random rnd = new Random();
+
+            //Determina de que lado de la pantalla aparece
+            int lado = (int)(rnd.NextDouble() * 2);
+            if (lado == 0)
+                Position.X = 0;
+            else
+                Position.X = (screenSize.Width * (float)rnd.NextDouble()) / 2;
+
+            Position.Y = (screenSize.Height * (float)rnd.NextDouble()) / 2;
+
+
+            //Busco el angulo del asteroide para que vaya al centro de la pantalla.
+            Vector2 ScreenCenterVector = new Vector2();
+            Vector2 ScreenCenter = new Vector2(screenSize.Width / 2, screenSize.Height / 2);
+            ScreenCenterVector = Vector2.Subtract(ScreenCenter, Position);
+
+            if (ScreenCenterVector.Length() > 0)
+                angle = (float)Math.Atan2(ScreenCenterVector.Y, ScreenCenterVector.X);
+        }
     }
 
     public struct Bullet
@@ -585,6 +699,5 @@ namespace AlumnoEjemplos.NaveEspacial
         public TgcBox renderModel;
         public float timeAlive { get; set; }
     }
-
 
 }
