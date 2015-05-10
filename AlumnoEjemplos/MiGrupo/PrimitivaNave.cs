@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using TgcViewer.Example;
@@ -11,6 +11,8 @@ using TgcViewer.Utils.TgcGeometry;
 using TgcViewer.Utils.TgcSceneLoader;
 using TgcViewer.Utils.Terrain;
 using TgcViewer.Utils._2D;
+using TgcViewer.Utils;
+using AlumnoEjemplos.MiGrupo;
 
 
 namespace AlumnoEjemplos.NaveEspacial
@@ -48,7 +50,7 @@ namespace AlumnoEjemplos.NaveEspacial
         TgcMesh neptune;
 
         TgcMesh spaceSphere;
-        Size screenSize;
+        public Size screenSize;
 
         float axisRotation = 0f;
         float earthAxisRotation = 0f;
@@ -77,23 +79,11 @@ namespace AlumnoEjemplos.NaveEspacial
         float anguloSubida;
 
 
-        //Sprites de Estrellas en HyperSpeed
-        List<TgcSprite> stars;
-        //El indice el sprite actual.
-        int currentStar;
-        float size;
-        float angle;
+        List<Star> gameStars;
+        const int starCount = 50; //La cantidad maxima de estrellas simultaneas.
 
-        //La posicion
-        public Vector2 Position;
-
-        Vector2 spriteSize;
-        const int StarWidth = 4;
-        const int StarHeight = 4;
-        public static int Size = 4;
-
-        //La constante con la cantidad maxima de estrellas simultaneas.
-        const int starCount = 50;
+        BlurEffect effectBlur;
+        List<TgcMesh> allMeshes;
 
 
         public override string getCategory()
@@ -117,13 +107,14 @@ namespace AlumnoEjemplos.NaveEspacial
         // Escribir aquí todo el código de inicialización: cargar modelos, texturas, modifiers, uservars, etc.
         public override void init()
         {
-
+            
             //GuiController.Instance: acceso principal a todas las herramientas del Framework
             //Device de DirectX para crear primitivas
             Device d3dDevice = GuiController.Instance.D3dDevice;
 
             //inicio la lista
             Disparos = new List<Bullet>();
+            allMeshes = new List<TgcMesh>();
 
             //Cargo el loader de Scenes y los Meshes
             TgcSceneLoader loader = new TgcSceneLoader();
@@ -131,26 +122,33 @@ namespace AlumnoEjemplos.NaveEspacial
 
             string sphere = GuiController.Instance.ExamplesMediaDir + "ModelosTgc\\Sphere\\Sphere-TgcScene.xml";
             sun = loader.loadSceneFromFile(sphere).Meshes[0];
-            sun.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\SunTexture.jpg") });
+            sun.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\SunTexture2.jpg") });
+            allMeshes.Add(sun);
 
             venus = loader.loadSceneFromFile(sphere).Meshes[0];
             venus.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\VenusTexture.jpg") });
+            allMeshes.Add(venus);
 
             earth = loader.loadSceneFromFile(sphere).Meshes[0];
             earth.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\EarthTexture.jpg") });
+            allMeshes.Add(earth);
 
             moon = loader.loadSceneFromFile(sphere).Meshes[0];
             moon.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\MoonTexture.jpg") });
+            allMeshes.Add(moon);
 
             jupiter = loader.loadSceneFromFile(sphere).Meshes[0];
             jupiter.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\JupiterTexture.jpg") });
+            allMeshes.Add(jupiter);
 
             neptune = loader.loadSceneFromFile(sphere).Meshes[0];
             neptune.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\NeptuneTexture.jpg") });
+            allMeshes.Add(neptune);
 
             spaceSphere = loader.loadSceneFromFile(sphere).Meshes[0];
             spaceSphere.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\spaceBackTexture.jpg") });
             spaceSphere.Scale = SPACE_SCALE;
+            allMeshes.Add(spaceSphere);
 
 
             //Deshabilitamos el manejo automático de Transformaciones de TgcMesh, para poder manipularlas en forma customizada
@@ -178,40 +176,15 @@ namespace AlumnoEjemplos.NaveEspacial
             spriteNitro.Position = new Vector2(FastMath.Max(screenSize.Width / 12 - spriteNitro.Texture.Size.Width, 0), FastMath.Max(screenSize.Height - screenSize.Height / 18, 0));
 
 
-            /*
-            //Creo la cantidad de estrellas simultaneas.
-            for (int i = 0; i < starCount; i++)
-            {
-                Stars star = new Stars();
-                star.Load(exampleDir, asteroidBitmap);
-
-                stars.Add(star);
-            }*/
+            
             //Creo la lista de Estrellas en HyperSpeed.
-            stars = new List<TgcSprite>();
-
-            spriteSize = new Vector2(StarWidth, StarHeight);
-            size = 1.0f;
-            angle = 0.0f;
-
-            TgcSprite newStar;
-            //Creo 64 sprites asignando distintos clipping rects a cada uno.
-            for (int i = 0; i < 8; i++)
+            gameStars = new List<Star>();
+            for (int numberStar = 0; numberStar < starCount; numberStar++)
             {
-                for (int j = 0; j < 8; j++)
-                {
-                    newStar = new TgcSprite();
-                    newStar.SrcRect = new Rectangle(j * (int)spriteSize.X, i * (int)spriteSize.Y, (int)spriteSize.X, (int)spriteSize.Y);
-                    newStar.Color = Color.WhiteSmoke;
-                    newStar.Texture = TgcTexture.createTexture(GuiController.Instance.AlumnoEjemplosMediaDir + "\\Texturas\\Star.png");
-                    newStar.Scaling = new Vector2(size, size);
-                    stars.Add(newStar);
-                }
+                Star actualStar = new Star();
+                actualStar.Load();
+                gameStars.Add(actualStar);
             }
-
-            currentStar = 0;
-
-            GenerateRandomPosition();
 
             //Para colisiones
             Colisionables.Clear();
@@ -254,6 +227,7 @@ namespace AlumnoEjemplos.NaveEspacial
             spaceShip.Scale = (escala);
             obbSpaceShip = TgcObb.computeFromAABB(spaceShip.BoundingBox);
             spaceShip.Position = new Vector3(500, 0, 200); //pos inicial
+            allMeshes.Add(spaceShip);
 
 
             ///////////////MODIFIERS//////////////////
@@ -285,6 +259,11 @@ namespace AlumnoEjemplos.NaveEspacial
             //Configurar a quien sigue y a que distancia Altura y Lejania
             GuiController.Instance.ThirdPersonCamera.setCamera(spaceShip.Position, 5, 30);
 
+
+            effectBlur = new BlurEffect();
+            effectBlur.Load();
+
+
             //seteo valor inicial de las variables del movimiento
             currentSpeed = 0f;      
             maxSpeed = 0.8f;       //valor temporal
@@ -302,6 +281,7 @@ namespace AlumnoEjemplos.NaveEspacial
         {
             //Device de DirectX para renderizar
             Device d3dDevice = GuiController.Instance.D3dDevice;
+            GuiController.Instance.Text3d.drawText("FPS: " + HighResolutionTimer.Instance.FramesPerSecond, 0, 0, Color.Yellow);
 
             //Obtener valores de Modifiers
             float accel = (float)GuiController.Instance.Modifiers["accel"];
@@ -555,33 +535,22 @@ namespace AlumnoEjemplos.NaveEspacial
             text1.render();
 
 
-            //Iniciar dibujado de todos los Sprites de la escena (en este caso es solo uno)
+            //Iniciar dibujado de todos los Sprites de la escena
             GuiController.Instance.Drawer2D.beginDrawSprite();
             //Dibujar sprites
             spriteLife.render();
             spriteNitro.render();
-            if(GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W) && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space)){
-                foreach(TgcSprite star in stars){
-                    //Chequeo si se escapa de la pantalla.
-                if (Position.X < -StarWidth || Position.Y < -StarHeight * 2 ||
-                    Position.X > screenSize.Width + StarWidth
-                    || Position.Y > screenSize.Height + StarHeight)
+            if(     GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W) 
+                &&  GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space)
+                && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.S))
+            {
+                foreach(Star actualStar in gameStars)
                 {
-                    GenerateRandomPosition();
+                    actualStar.Update(elapsedTime);
+                    actualStar.Render();
                 }
 
-                    float speed = 500;
-
-                    Position.X += speed * elapsedTime * (float)Math.Cos(angle);
-                    Position.Y += speed * elapsedTime * (float)Math.Sin(angle);
-
-                    currentStar++;
-                    if (currentStar > 63) currentStar = 0;
-
-                stars[currentStar].Position = Position;
-                }
-
-                stars[currentStar].render();
+                effectBlur.Render(elapsedTime, allMeshes);
             }
 
             //Finalizar el dibujado de Sprites
@@ -597,7 +566,6 @@ namespace AlumnoEjemplos.NaveEspacial
 
             return scale * yRot;
         }
-
 
         private Matrix getEarthTransform(float elapsedTime)
         {
@@ -650,15 +618,11 @@ namespace AlumnoEjemplos.NaveEspacial
             spriteNitro.dispose();
             spaceSphere.dispose();
 
-            //Dispose Stars
-            currentStar = 0;
-            foreach (TgcSprite star in stars)
+            foreach (Star actualStar in gameStars)
             {
-                currentStar++;
-                if (currentStar > 63) currentStar = 0;
-
-                stars[currentStar].dispose();
+                actualStar.Close();
             }
+            effectBlur.Close();
         }
 
         public void Subiendo(int unaDir, float velocidad, float deltaTime)
@@ -669,29 +633,6 @@ namespace AlumnoEjemplos.NaveEspacial
                 spaceShip.rotateX((velocidad / 2) * unaDir * deltaTime);
             }
         }
-
-        public void GenerateRandomPosition()
-        {
-            Random rnd = new Random();
-
-            //Determina de que lado de la pantalla aparece
-            int lado = (int)(rnd.NextDouble() * 2);
-            if (lado == 0)
-                Position.X = 0;
-            else
-                Position.X = (screenSize.Width * (float)rnd.NextDouble()) / 2;
-
-            Position.Y = (screenSize.Height * (float)rnd.NextDouble()) / 2;
-
-
-            //Busco el angulo del asteroide para que vaya al centro de la pantalla.
-            Vector2 ScreenCenterVector = new Vector2();
-            Vector2 ScreenCenter = new Vector2(screenSize.Width / 2, screenSize.Height / 2);
-            ScreenCenterVector = Vector2.Subtract(ScreenCenter, Position);
-
-            if (ScreenCenterVector.Length() > 0)
-                angle = (float)Math.Atan2(ScreenCenterVector.Y, ScreenCenterVector.X);
-        }
     }
 
     public struct Bullet
@@ -699,5 +640,8 @@ namespace AlumnoEjemplos.NaveEspacial
         public TgcBox renderModel;
         public float timeAlive { get; set; }
     }
+
+
+
 
 }
