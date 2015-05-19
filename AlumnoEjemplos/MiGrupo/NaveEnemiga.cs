@@ -23,8 +23,11 @@ namespace AlumnoEjemplos.NaveEnemiga
         float time;
         Random random = new Random();
 
+        TgcBox[] waypoints = new TgcBox[3];
+        int curWaypoint = 1;
+
         //Variable direccion de movimiento
-        float currentMoveDir = 1f;
+        //float currentMoveDir = 1f;
 
         public override string getCategory()
         {
@@ -46,6 +49,15 @@ namespace AlumnoEjemplos.NaveEnemiga
             Device d3dDevice = GuiController.Instance.D3dDevice;
             string alumnoMediaFolder = GuiController.Instance.AlumnoEjemplosMediaDir;
 
+            Vector3 centro;
+            Vector3 tamano = new Vector3(1,1,1);
+
+            for (int i = 0; i <= 2; i += 1)
+            {
+                centro = new Vector3(i * 100, random.Next(-30, 30), i * 100);
+                waypoints[i] = TgcBox.fromSize(centro, tamano, Color.Yellow);
+            }
+
             //Creo la caja...
             Vector3 center = new Vector3(0, 0, 0);
             Vector3 size = new Vector3(10, 10, 10);
@@ -60,13 +72,15 @@ namespace AlumnoEjemplos.NaveEnemiga
             //Inicializo la nave
             obtenerPosicionYMovimiento();
             naveEnemiga.Scale = new Vector3(0.2f, 0.2f, 0.2f);
-            naveEnemiga.Position = pos_nave;
-            naveEnemiga.AutoTransformEnable = false;
+            //naveEnemiga.Position = pos_nave;
+            naveEnemiga.Position = new Vector3(0, 0, 0);
+            //naveEnemiga.AutoTransformEnable = false;
             dir_nave = new Vector3(0, 0, 1);
 
 
             //Velocidad de la Nave
             GuiController.Instance.Modifiers.addFloat("Speed", 0f, 30f, 10f);
+            GuiController.Instance.Modifiers.addInt("WaypointPrueba", 0, 2, 1);
 
 
             //Camara sobre la caja
@@ -80,18 +94,35 @@ namespace AlumnoEjemplos.NaveEnemiga
 
             //Obtene valor de Modifier
             float Speed = (float)GuiController.Instance.Modifiers["Speed"];
+            int WaypointPrueba = (int)GuiController.Instance.Modifiers["WaypointPrueba"];
             
             //Configurar Posicion y Movimiento de la nave
             time += elapsedTime;
-            float alfa = -time * Geometry.DegreeToRadian(15.0f);
-            naveEnemiga.Position = new Vector3(pos_nave.X * (float)Math.Cos(alfa), pos_nave.Y * (float)Math.Sin(alfa), pos_nave.Z * (float)Math.Sin(alfa));
-            dir_nave = new Vector3(-(float)Math.Sin(alfa), 0, (float)Math.Cos(alfa));
-            naveEnemiga.Transform = CalcularMatriz(naveEnemiga.Position, naveEnemiga.Scale, dir_nave);
+            //float alfa = -time * Geometry.DegreeToRadian(15.0f);
+            //naveEnemiga.Position = new Vector3(pos_nave.X * (float)Math.Cos(alfa), pos_nave.Y * (float)Math.Sin(alfa), pos_nave.Z * (float)Math.Sin(alfa));
+           // dir_nave = new Vector3(-(float)Math.Sin(alfa), 0, (float)Math.Cos(alfa));
+            //naveEnemiga.Transform = CalcularMatriz(naveEnemiga.Position, naveEnemiga.Scale, dir_nave);
 
             //Renderizar nave y caja
-            naveEnemiga.move(0, 0, -Speed * currentMoveDir * elapsedTime);
+            //naveEnemiga.move(0, 0, -Speed * currentMoveDir * elapsedTime);
+
+
+
+            Vector3 nextWaypointPos = waypoints[curWaypoint].Position - naveEnemiga.Position;
+            naveEnemiga.move(nextWaypointPos * elapsedTime);
+
+            if (EnCercania(naveEnemiga.Position, waypoints[curWaypoint].Position))
+            {
+                IncrementarWaypoint();
+                Console.Write("Current waypoint: " + curWaypoint.ToString());
+            }
+
+            if (GuiController.Instance.D3dInput.keyPressed(Microsoft.DirectX.DirectInput.Key.A)) { Console.Write("a"); Console.WriteLine(); }
+
             naveEnemiga.render();
             box.render();
+
+            for (int i = 0; i <= 2; i += 1) { waypoints[i].render(); }
         }
 
         public override void close()
@@ -99,7 +130,7 @@ namespace AlumnoEjemplos.NaveEnemiga
             //Liberar memoria
             naveEnemiga.dispose();
             box.dispose();
-
+            for (int i = 0; i <= 2; i += 1) { waypoints[i].dispose(); }
         }
 
         //TODO Configurar para que sea random
@@ -156,6 +187,26 @@ namespace AlumnoEjemplos.NaveEnemiga
             float r = (float)random.Next(20, 200);
             
             return r;
+        }
+
+        public void IncrementarWaypoint()
+        {
+            curWaypoint += 1;
+            if (curWaypoint > 2) { curWaypoint = 0; }
+        }
+
+        public bool EnCercania(Vector3 pos1, Vector3 pos2)
+        {
+            if ((pos1.X < pos2.X - 2 || pos1.X > pos2.X + 2) &&
+                (pos1.Y < pos2.Y - 2 || pos1.Y > pos2.Y + 2) &&
+                (pos1.Z < pos2.Z - 2 || pos1.Z > pos2.Z + 2))
+            {
+                return true;
+            }
+            else 
+            { 
+                return false;
+            }
         }
 
     }

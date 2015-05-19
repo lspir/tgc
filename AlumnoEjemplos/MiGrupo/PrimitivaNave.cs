@@ -69,6 +69,8 @@ namespace AlumnoEjemplos.NaveEspacial
         TgcObb obbSpaceShip; //para la colision de la nave
         List<TgcBoundingBox> Colisionables = new List<TgcBoundingBox>();
 
+        TgcMesh naveEnemiga; //nave enemiga
+
 
         TgcText2d text1;    //textoExplicacion
         TgcSprite spriteLife;   //barra de vida
@@ -119,6 +121,7 @@ namespace AlumnoEjemplos.NaveEspacial
             //Cargo el loader de Scenes y los Meshes
             TgcSceneLoader loader = new TgcSceneLoader();
             TgcScene scene = loader.loadSceneFromFile(GuiController.Instance.AlumnoEjemplosMediaDir + "NaveStarWars\\NaveStarWars-TgcScene.xml");
+            TgcScene sceneEnemigo = loader.loadSceneFromFile(GuiController.Instance.AlumnoEjemplosMediaDir + "xWing\\xWing-TgcScene.xml");
 
             string sphere = GuiController.Instance.ExamplesMediaDir + "ModelosTgc\\Sphere\\Sphere-TgcScene.xml";
             sun = loader.loadSceneFromFile(sphere).Meshes[0];
@@ -229,6 +232,12 @@ namespace AlumnoEjemplos.NaveEspacial
             spaceShip.Position = new Vector3(500, 0, 200); //pos inicial
             allMeshes.Add(spaceShip);
 
+            naveEnemiga = sceneEnemigo.Meshes[0];
+            naveEnemiga.Scale = (escala * 5);
+            naveEnemiga.Position = new Vector3(600, 0, 200); //una pos inicial
+            //naveEnemiga.AutoTransformEnable = false;
+            allMeshes.Add(naveEnemiga);
+
 
             ///////////////MODIFIERS//////////////////
             //lo que va incrementando la aceleracion
@@ -251,6 +260,9 @@ namespace AlumnoEjemplos.NaveEspacial
 
             //hipervelocidad de la nave
             GuiController.Instance.Modifiers.addFloat("hyperSpeed", 1f, 5f, 4f);
+
+            //distancia del follow enemigo
+            GuiController.Instance.Modifiers.addFloat("distEnemigo", 10f, 99f, 20f);
 
 
             //AGREGO LA CAMARA QUE LA SIGUE
@@ -291,6 +303,7 @@ namespace AlumnoEjemplos.NaveEspacial
             float rotationZ = (float)GuiController.Instance.Modifiers["rotationZ"];
             float angRetorno = (float)GuiController.Instance.Modifiers["angRetorno"];
             float hyperSpeed = (float)GuiController.Instance.Modifiers["hyperSpeed"];
+            float distEnemigo = (float)GuiController.Instance.Modifiers["distEnemigo"];
 
             spaceSphere.render(); //la rendereo primero porque es el fondo
 
@@ -461,10 +474,23 @@ namespace AlumnoEjemplos.NaveEspacial
             spaceShip.rotateY(AngleZRotation * elapsedTime);
             GuiController.Instance.ThirdPersonCamera.rotateY(AngleZRotation * elapsedTime);
 
+            //logica AI
+            Vector3 targetDeEnemigo = Vector3.Subtract(spaceShip.Position, naveEnemiga.Position);
+            float enemySpeed = maxSpeed * 0.9f; //que sea un poco mas lenta
+            if (DistanceAtoB(spaceShip.Position, naveEnemiga.Position) < 200) //si me encuentro a X unidades de distancia, me detecta y se activa
+            {
+                if (DistanceAtoB(spaceShip.Position, naveEnemiga.Position) > 50) //muy cerca la freno pero sino que me siga
+                {
+                    naveEnemiga.move(Vector3.Normalize(targetDeEnemigo) * maxSpeed);
+                }
+
+                naveEnemiga.Rotation = LookAt(naveEnemiga.Position, spaceShip.Position); //rotacion donde la nave "me mira"
+            }
+
 
             //Hacer que la cámara en 3ra persona se ajuste a la nueva posición del objeto
             GuiController.Instance.ThirdPersonCamera.Target = spaceShip.Position;
-
+            
             //actualizo el obb
             obbSpaceShip.move(spaceShip.Position - obbSpaceShip.Position);
             obbSpaceShip.setRotation(spaceShip.Rotation);
@@ -532,7 +558,10 @@ namespace AlumnoEjemplos.NaveEspacial
             //RENDER
             //Siempre primero hacer todos los cálculos de lógica e input y luego al final dibujar todo (ciclo update-render)
             spaceShip.render();
+            naveEnemiga.render();
             text1.render();
+
+            naveEnemiga.BoundingBox.render();
 
 
             //Iniciar dibujado de todos los Sprites de la escena
@@ -607,6 +636,7 @@ namespace AlumnoEjemplos.NaveEspacial
         public override void close()
         {
             spaceShip.dispose();
+            naveEnemiga.dispose();
             text1.dispose();
             sun.dispose();
             venus.dispose();
@@ -632,6 +662,22 @@ namespace AlumnoEjemplos.NaveEspacial
                 anguloSubida += (velocidad / 2) * unaDir * deltaTime;
                 spaceShip.rotateX((velocidad / 2) * unaDir * deltaTime);
             }
+        }
+
+        public float DistanceAtoB(Vector3 pos1, Vector3 pos2)
+        {
+            return (pos1 - pos2).Length();
+        }
+
+        Vector3 LookAt(Vector3 center, Vector3 target)
+        {
+            Vector3 up = new Vector3(0, 1, 0);
+
+            Vector3 direccion = Vector3.Normalize(target - center);
+            float compX = -FastMath.Asin(-direccion.Y);
+            float compY = FastMath.Atan2(-direccion.X, -direccion.Z);
+
+            return new Vector3(compX, compY, 0);
         }
     }
 
