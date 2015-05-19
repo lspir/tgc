@@ -62,7 +62,9 @@ namespace AlumnoEjemplos.NaveEspacial
 
         //shooting related stuff
         List<Bullet> Disparos;
+        List<Bullet> DisparosEnemy;
         float timeSinceLastShot;
+        float timeSinceLastEnemyShot;
 
 
         TgcMesh spaceShip; //nave
@@ -116,6 +118,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
             //inicio la lista
             Disparos = new List<Bullet>();
+            DisparosEnemy = new List<Bullet>();
             allMeshes = new List<TgcMesh>();
 
             //Cargo el loader de Scenes y los Meshes
@@ -232,6 +235,7 @@ namespace AlumnoEjemplos.NaveEspacial
             spaceShip.Position = new Vector3(500, 0, 200); //pos inicial
             allMeshes.Add(spaceShip);
 
+            //AGREGO NAVE ENEMIGA
             naveEnemiga = sceneEnemigo.Meshes[0];
             naveEnemiga.Scale = (escala * 5);
             naveEnemiga.Position = new Vector3(600, 0, 200); //una pos inicial
@@ -283,6 +287,7 @@ namespace AlumnoEjemplos.NaveEspacial
             anguloSubida = 0f;      //para la rotacion de la nave (arriba y abajo)
 
             timeSinceLastShot = 10f;
+            timeSinceLastEnemyShot = 10f;
         }
 
 
@@ -309,19 +314,15 @@ namespace AlumnoEjemplos.NaveEspacial
 
             //cada frame voy actualizando el tiempo entre disparos
             timeSinceLastShot += elapsedTime;
+            timeSinceLastEnemyShot += elapsedTime;
 
             ///////////////INPUT TECLADO//////////////////
 
             //Boton Izq, disparo
             if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_LEFT) && timeSinceLastShot > 0.5f) //reviso tecla y el intervalo de disparo
             {
-                Bullet disparo;
-                TgcBox disparoModel;
-                disparoModel = TgcBox.fromSize(new Vector3(1, 1, 4), Color.Pink);
-                disparoModel.Position = spaceShip.Position;
-                disparoModel.Rotation = spaceShip.Rotation;
-                disparo = new Bullet(disparoModel);
-                Disparos.Add(disparo);
+                Bullet disparoTemp = crearBalaPara(spaceShip);
+                Disparos.Add(disparoTemp);
                 timeSinceLastShot = 0f;
             }
 
@@ -472,12 +473,32 @@ namespace AlumnoEjemplos.NaveEspacial
             float enemySpeed = maxSpeed * 0.9f; //que sea un poco mas lenta
             if (DistanceAtoB(spaceShip.Position, naveEnemiga.Position) < 200) //si me encuentro a X unidades de distancia, me detecta y se activa
             {
+                if (DistanceAtoB(spaceShip.Position, naveEnemiga.Position) < 80 && timeSinceLastEnemyShot > 1f) //rango de Disparo
+                {
+                    Bullet disparoTempE = crearBalaPara(naveEnemiga);
+                    DisparosEnemy.Add(disparoTempE);
+                    timeSinceLastEnemyShot = 0f;
+                }
+
                 if (DistanceAtoB(spaceShip.Position, naveEnemiga.Position) > 50) //muy cerca la freno pero sino que me siga
                 {
                     naveEnemiga.move(Vector3.Normalize(targetDeEnemigo) * maxSpeed);
                 }
 
                 naveEnemiga.Rotation = LookAt(naveEnemiga.Position, spaceShip.Position); //rotacion donde la nave "me mira"
+            }
+
+            for (int i = 0; i < DisparosEnemy.Count; i += 1) //for de balas enemigas
+            {
+                DisparosEnemy[i].renderModel.moveOrientedY(-1f);
+                DisparosEnemy[i].renderModel.render();
+                DisparosEnemy[i].incrementarTiempo(elapsedTime);
+
+                if (DisparosEnemy[i].getDone()) //si la bala hace X segundos que esta en el juego, ya viajo lejos y no me interesa, la destruyo
+                {
+                    DisparosEnemy[i].renderModel.dispose();
+                    DisparosEnemy.Remove(DisparosEnemy[i]);
+                }
             }
 
 
@@ -671,6 +692,17 @@ namespace AlumnoEjemplos.NaveEspacial
             float compY = FastMath.Atan2(-direccion.X, -direccion.Z);
 
             return new Vector3(compX, compY, 0);
+        }
+
+        Bullet crearBalaPara(TgcMesh owner)
+        {
+            Bullet disparo;
+            TgcBox disparoModel;
+            disparoModel = TgcBox.fromSize(new Vector3(1, 1, 4), Color.Pink);
+            disparoModel.Position = owner.Position;
+            disparoModel.Rotation = owner.Rotation;
+            disparo = new Bullet(disparoModel);
+            return disparo;
         }
     }
 
