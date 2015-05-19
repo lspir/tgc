@@ -316,13 +316,11 @@ namespace AlumnoEjemplos.NaveEspacial
             if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_LEFT) && timeSinceLastShot > 0.5f) //reviso tecla y el intervalo de disparo
             {
                 Bullet disparo;
-                disparo = new Bullet();
                 TgcBox disparoModel;
                 disparoModel = TgcBox.fromSize(new Vector3(1, 1, 4), Color.Pink);
                 disparoModel.Position = spaceShip.Position;
                 disparoModel.Rotation = spaceShip.Rotation;
-                disparo.renderModel = disparoModel;
-                disparo.timeAlive = 0f;
+                disparo = new Bullet(disparoModel);
                 Disparos.Add(disparo);
                 timeSinceLastShot = 0f;
             }
@@ -331,14 +329,9 @@ namespace AlumnoEjemplos.NaveEspacial
             {
                 Disparos[i].renderModel.moveOrientedY(-1f);
                 Disparos[i].renderModel.render();
-                float timetoAdd = Disparos[i].timeAlive + elapsedTime;
-                Bullet disparo2;
-                disparo2 = new Bullet();
-                disparo2.renderModel = Disparos[i].renderModel;
-                disparo2.timeAlive = timetoAdd;
-                Disparos[i] = disparo2;
+                Disparos[i].incrementarTiempo(elapsedTime);
 
-                if (Disparos[i].timeAlive > 0.5f) //si la bala hace X segundos que esta en el juego, ya viajo lejos y no me interesa, la destruyo
+                if (Disparos[i].getDone()) //si la bala hace X segundos que esta en el juego, ya viajo lejos y no me interesa, la destruyo
                 {
                     Disparos[i].renderModel.dispose();
                     Disparos.Remove(Disparos[i]);
@@ -679,12 +672,6 @@ namespace AlumnoEjemplos.NaveEspacial
 
             return new Vector3(compX, compY, 0);
         }
-    }
-
-    public struct Bullet
-    {
-        public TgcBox renderModel;
-        public float timeAlive { get; set; }
     }
 
 
