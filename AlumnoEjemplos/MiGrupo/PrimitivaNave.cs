@@ -174,11 +174,11 @@ namespace AlumnoEjemplos.NaveEspacial
             GuiController.Instance.BackgroundColor = Color.Black;
 
             //Crear Sprites
-            vidaNave = 100;
-            vidaTotal = -0.5f;
+            vidaNave = 100f;
+            vidaTotal = 100f;
             spriteLife = new TgcSprite();
             spriteLife.Texture = TgcTexture.createTexture(GuiController.Instance.AlumnoEjemplosMediaDir + "\\Texturas\\LifeBar.png");
-            spriteLife.Scaling = new Vector2(0.3f, vidaTotal);
+            spriteLife.Scaling = new Vector2(0.3f, -0.5f);
             spriteNitro = new TgcSprite();
             spriteNitro.Texture = TgcTexture.createTexture(GuiController.Instance.AlumnoEjemplosMediaDir + "\\Texturas\\NitroBar.png");
             spriteNitro.Scaling = new Vector2(0.1f, -0.3f);
@@ -525,6 +525,7 @@ namespace AlumnoEjemplos.NaveEspacial
                 if (Math.Sqrt(Math.Pow(misil.Position.X - spaceShip.Position.X, 2.0) + Math.Pow(misil.Position.Y - spaceShip.Position.Y, 2.0)+ Math.Pow(misil.Position.Z - spaceShip.Position.Z, 2.0)) <= largoBala)
                     {
                         reducirVida(spaceShip);
+                        DisparosEnemy[i].incrementarTiempo(5f);
                     }
             }
 
@@ -622,7 +623,7 @@ namespace AlumnoEjemplos.NaveEspacial
         private void reducirVida(TgcMesh spaceShip)
         {
             vidaNave -=10;
-            spriteLife.Scaling = new Vector2(spriteLife.Scaling.X, vidaTotal*(vidaNave/100));
+            spriteLife.Scaling = new Vector2(spriteLife.Scaling.X, spriteLife.Scaling.Y * (vidaNave / vidaTotal));
             
         }
 
