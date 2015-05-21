@@ -65,6 +65,8 @@ namespace AlumnoEjemplos.NaveEspacial
         List<Bullet> DisparosEnemy;
         float timeSinceLastShot;
         float timeSinceLastEnemyShot;
+        float largoBala = 4f;
+        
 
 
         TgcMesh spaceShip; //nave
@@ -76,6 +78,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
         TgcText2d text1;    //textoExplicacion
         TgcSprite spriteLife;   //barra de vida
+        float vidaTotal;
         TgcSprite spriteNitro; //barra de nitro
         float currentSpeed;
         float maxSpeed;
@@ -88,6 +91,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
         BlurEffect effectBlur;
         List<TgcMesh> allMeshes;
+        float vidaNave;
 
 
         public override string getCategory()
@@ -170,9 +174,11 @@ namespace AlumnoEjemplos.NaveEspacial
             GuiController.Instance.BackgroundColor = Color.Black;
 
             //Crear Sprites
+            vidaNave = 100;
+            vidaTotal = -0.5f;
             spriteLife = new TgcSprite();
             spriteLife.Texture = TgcTexture.createTexture(GuiController.Instance.AlumnoEjemplosMediaDir + "\\Texturas\\LifeBar.png");
-            spriteLife.Scaling = new Vector2(0.3f, -0.5f);
+            spriteLife.Scaling = new Vector2(0.3f, vidaTotal);
             spriteNitro = new TgcSprite();
             spriteNitro.Texture = TgcTexture.createTexture(GuiController.Instance.AlumnoEjemplosMediaDir + "\\Texturas\\NitroBar.png");
             spriteNitro.Scaling = new Vector2(0.1f, -0.3f);
@@ -328,6 +334,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
             for (int i = 0; i < Disparos.Count; i += 1)
             {
+                
                 Disparos[i].renderModel.moveOrientedY(-1f);
                 Disparos[i].renderModel.render();
                 Disparos[i].incrementarTiempo(elapsedTime);
@@ -510,6 +517,17 @@ namespace AlumnoEjemplos.NaveEspacial
             obbSpaceShip.setRotation(spaceShip.Rotation);
             obbSpaceShip.render();
 
+            TgcBox misil;
+            //verifico disparo
+            for (int i = 0; i < DisparosEnemy.Count; i += 1) //for de balas enemigas
+            {
+                misil = DisparosEnemy[i].renderModel;
+                if (Math.Sqrt(Math.Pow(misil.Position.X - spaceShip.Position.X, 2.0) + Math.Pow(misil.Position.Y - spaceShip.Position.Y, 2.0)+ Math.Pow(misil.Position.Z - spaceShip.Position.Z, 2.0)) <= largoBala)
+                    {
+                        reducirVida(spaceShip);
+                    }
+            }
+
 
             //checkeo colisiones
             bool collide = false;
@@ -599,6 +617,13 @@ namespace AlumnoEjemplos.NaveEspacial
             //Finalizar el dibujado de Sprites
             GuiController.Instance.Drawer2D.endDrawSprite();
 
+        }
+
+        private void reducirVida(TgcMesh spaceShip)
+        {
+            vidaNave -=10;
+            spriteLife.Scaling = new Vector2(spriteLife.Scaling.X, vidaTotal*(vidaNave/100));
+            
         }
 
 /*
@@ -698,12 +723,15 @@ namespace AlumnoEjemplos.NaveEspacial
         {
             Bullet disparo;
             TgcBox disparoModel;
-            disparoModel = TgcBox.fromSize(new Vector3(1, 1, 4), Color.Pink);
+            disparoModel = TgcBox.fromSize(new Vector3(1, 1, largoBala), Color.Pink);
             disparoModel.Position = owner.Position;
             disparoModel.Rotation = owner.Rotation;
+            disparoModel.Rotation.Multiply(0f);
             disparo = new Bullet(disparoModel);
             return disparo;
         }
+
+        
     }
 
 
