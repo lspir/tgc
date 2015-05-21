@@ -20,39 +20,39 @@ namespace AlumnoEjemplos.MiGrupo
     {
         Effect effect;
         Surface g_pDepthStencil;     // Depth-stencil buffer 
-        Texture g_pRenderTarget, g_pRenderTarget4, g_pRenderTarget4Aux;
+        Texture g_pRenderTarget;
+        Texture g_pVel1, g_pVel2;   // velocidad
         VertexBuffer g_pVBV3D;
+        Matrix antMatWorldView;
+        List<TgcMesh> allMesh;
 
-        int cant_pasadas = 2;
-        bool separable = true;
-        TgcBox box;
+        float time = 0;
 
-        public void Load()
+        public void Load(List<TgcMesh> allMeshes)
         {
             GuiController.Instance.CustomRenderEnabled = true;
-
             Device d3dDevice = GuiController.Instance.D3dDevice;
-
-            //Crear caja vacia
-            box = new TgcBox();
-            box.Color = Color.AliceBlue;
-            Vector3 sizeAndPos = new Vector3(30,30,30);
-            box.Position = sizeAndPos;
-            box.Size = sizeAndPos;
 
             //Cargar Shader personalizado
             string compilationErrors;
-            effect = Effect.FromFile(GuiController.Instance.D3dDevice,
-                GuiController.Instance.AlumnoEjemplosMediaDir + "\\Shaders\\GaussianBlur.fx",
+            effect = Effect.FromFile(GuiController.Instance.D3dDevice, 
+                GuiController.Instance.AlumnoEjemplosMediaDir + "\\Shaders\\MotionBlur.fx",
                 null, null, ShaderFlags.PreferFlowControl, null, out compilationErrors);
             if (effect == null)
             {
                 throw new Exception("Error al cargar shader. Errores: " + compilationErrors);
             }
+
             //Configurar Technique dentro del shader
+            allMesh = allMeshes;
             effect.Technique = "DefaultTechnique";
+            foreach (TgcMesh m in allMesh)
+            {
+                m.Effect = effect;
+                m.Technique = "DefaultTechnique";
+            }
 
-
+            //stencil
             g_pDepthStencil = d3dDevice.CreateDepthStencilSurface(d3dDevice.PresentationParameters.BackBufferWidth,
                                                              d3dDevice.PresentationParameters.BackBufferHeight,
                                                              DepthFormat.D24S8,
@@ -65,15 +65,13 @@ namespace AlumnoEjemplos.MiGrupo
                     , d3dDevice.PresentationParameters.BackBufferHeight, 1, Usage.RenderTarget,
                         Format.X8R8G8B8, Pool.Default);
 
-            g_pRenderTarget4 = new Texture(d3dDevice, d3dDevice.PresentationParameters.BackBufferWidth/4
-                    , d3dDevice.PresentationParameters.BackBufferHeight/4, 1, Usage.RenderTarget,
-                        Format.X8R8G8B8, Pool.Default);
-
-            g_pRenderTarget4Aux = new Texture(d3dDevice, d3dDevice.PresentationParameters.BackBufferWidth / 4
-                    , d3dDevice.PresentationParameters.BackBufferHeight / 4, 1, Usage.RenderTarget,
-                        Format.X8R8G8B8, Pool.Default);
-
-            effect.SetValue("g_RenderTarget", g_pRenderTarget);
+            // velocidad del pixel
+            g_pVel1 = new Texture(d3dDevice, d3dDevice.PresentationParameters.BackBufferWidth
+                    , d3dDevice.PresentationParameters.BackBufferHeight, 1, Usage.RenderTarget,
+                        Format.A16B16G16R16F, Pool.Default);
+            g_pVel2 = new Texture(d3dDevice, d3dDevice.PresentationParameters.BackBufferWidth
+                    , d3dDevice.PresentationParameters.BackBufferHeight, 1, Usage.RenderTarget,
+                        Format.A16B16G16R16F, Pool.Default);
 
             // Resolucion de pantalla
             effect.SetValue("screen_dx", d3dDevice.PresentationParameters.BackBufferWidth);
@@ -92,158 +90,101 @@ namespace AlumnoEjemplos.MiGrupo
                     4, d3dDevice, Usage.Dynamic | Usage.WriteOnly,
                         CustomVertex.PositionTextured.Format, Pool.Default);
             g_pVBV3D.SetData(vertices, 0, LockFlags.None);
+
+            antMatWorldView = Matrix.Identity;
         }
 
 
-        public void Render(float elapsedTime, List<TgcMesh> allMeshes)
+        public void update(float elapsedTime)
         {
+            time += elapsedTime;
+            float r = 40;
+            foreach (TgcMesh m in allMesh)
+            {
+                m.Position = new Vector3(r * (float)Math.Cos(time * 0.5), 0, 0 * (float)Math.Sin(time * 0.5));
+            }
+        }
+
+        public void renderScene(String technique)
+        {
+            foreach (TgcMesh m in allMesh)
+            {
+                m.Technique = technique;
+                m.render();
+            }
+        }
+
+        public void Render(float elapsedTime)
+        {
+            update(elapsedTime);
             Device device = GuiController.Instance.D3dDevice;
-            Control panel3d = GuiController.Instance.Panel3d;
-            float aspectRatio = (float)panel3d.Width / (float)panel3d.Height;
+            GuiController.Instance.Text3d.drawText("FPS: " + HighResolutionTimer.Instance.FramesPerSecond, 0, 0, Color.Yellow);
 
-
-            //Cargar variables de shader
-
-            // dibujo la escena una textura 
-            effect.Technique = "DefaultTechnique";
             // guardo el Render target anterior y seteo la textura como render target
             Surface pOldRT = device.GetRenderTarget(0);
-            Surface pSurf = g_pRenderTarget.GetSurfaceLevel(0);
-            
+            Surface pSurf = g_pVel1.GetSurfaceLevel(0);
             device.SetRenderTarget(0, pSurf);
             // hago lo mismo con el depthbuffer, necesito el que no tiene multisampling
             Surface pOldDS = device.DepthStencilSurface;
-            // Probar de comentar esta linea, para ver como se produce el fallo en el ztest
-            // por no soportar usualmente el multisampling en el render to texture.
-            
             device.DepthStencilSurface = g_pDepthStencil;
 
+            // 1 - Genero un mapa de velocidad 
+            effect.Technique = "VelocityMap";
+            // necesito mandarle la matrix de view proj anterior
+            effect.SetValue("matWorldViewProjAnt", antMatWorldView * device.Transform.Projection);
             device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
             device.BeginScene();
-
-            //Dibujamos todos los meshes del escenario
-            foreach (TgcMesh m in allMeshes)
-            {
-                m.render();
-            }
-            box.render();
+            renderScene("VelocityMap");
             device.EndScene();
             pSurf.Dispose();
 
 
-                if (separable)
-                {
-                    // 1er pasada: downfilter x 4
-                    // -----------------------------------------------------
-                    pSurf = g_pRenderTarget4.GetSurfaceLevel(0);
-                    device.SetRenderTarget(0, pSurf);
-                    device.BeginScene();
-                    effect.Technique = "DownFilter4";
-                    device.VertexFormat = CustomVertex.PositionTextured.Format;
-                    device.SetStreamSource(0, g_pVBV3D, 0);
-                    effect.SetValue("g_RenderTarget", g_pRenderTarget);
+            // 2- Genero la imagen pp dicha 
+            effect.Technique = "DefaultTechnique";
+            pSurf = g_pRenderTarget.GetSurfaceLevel(0);
+            device.SetRenderTarget(0, pSurf);
+            device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
+            device.BeginScene();
+            renderScene("DefaultTechnique");
+            device.EndScene();
+            pSurf.Dispose();
 
-                    device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
-                    effect.Begin(FX.None);
-                    effect.BeginPass(0);
-                    device.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
-                    effect.EndPass();
-                    effect.End();
-                    pSurf.Dispose();
-                    device.EndScene();
+            // Ultima pasada vertical va sobre la pantalla pp dicha
+            device.SetRenderTarget(0, pOldRT);
+            device.BeginScene();
+            effect.Technique = "PostProcessMotionBlur";
+            device.VertexFormat = CustomVertex.PositionTextured.Format;
+            device.SetStreamSource(0, g_pVBV3D, 0);
+            effect.SetValue("g_RenderTarget", g_pRenderTarget);
+            effect.SetValue("texVelocityMap", g_pVel1);
+            effect.SetValue("texVelocityMapAnt", g_pVel2);
+            device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
+            effect.Begin(FX.None);
+            effect.BeginPass(0);
+            device.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
+            effect.EndPass();
+            effect.End();
+            device.EndScene();
 
-                    // TextureLoader.Save("scene.bmp", ImageFileFormat.Bmp, g_pRenderTarget4);
-                    device.DepthStencilSurface = pOldDS;
-
-                    // Pasadas de blur
-                    for (int P = 0; P < cant_pasadas; ++P)
-                    {
-                        // Gaussian blur Horizontal
-                        // -----------------------------------------------------
-                        pSurf = g_pRenderTarget4Aux.GetSurfaceLevel(0);
-                        device.SetRenderTarget(0, pSurf);
-                        // dibujo el quad pp dicho :
-                        device.BeginScene();
-                        effect.Technique = "GaussianBlurSeparable";
-                        device.VertexFormat = CustomVertex.PositionTextured.Format;
-                        device.SetStreamSource(0, g_pVBV3D, 0);
-                        effect.SetValue("g_RenderTarget", g_pRenderTarget4);
-
-                        device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
-                        effect.Begin(FX.None);
-                        effect.BeginPass(0);
-                        device.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
-                        effect.EndPass();
-                        effect.End();
-                        pSurf.Dispose();
-                        device.EndScene();
-                        //TextureLoader.Save("blurH.bmp", ImageFileFormat.Bmp, g_pRenderTarget4Aux);
-
-                        if (P < cant_pasadas - 1)
-                        {
-                            pSurf = g_pRenderTarget4.GetSurfaceLevel(0);
-                            device.SetRenderTarget(0, pSurf);
-                            pSurf.Dispose();
-                        }
-                        else
-                            // Ultima pasada vertical va sobre la pantalla pp dicha
-                            device.SetRenderTarget(0, pOldRT);
-
-
-                        //  Gaussian blur Vertical
-                        // -----------------------------------------------------
-                        device.BeginScene();
-                        effect.Technique = "GaussianBlurSeparable";
-                        device.VertexFormat = CustomVertex.PositionTextured.Format;
-                        device.SetStreamSource(0, g_pVBV3D, 0);
-                        effect.SetValue("g_RenderTarget", g_pRenderTarget4Aux);
-
-                        device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
-                        effect.Begin(FX.None);
-                        effect.BeginPass(1);
-                        device.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
-                        effect.EndPass();
-                        effect.End();
-                        if (P < cant_pasadas - 1)
-                            device.EndScene();
-
-                        //TextureLoader.Save("blurV.bmp", ImageFileFormat.Bmp, g_pRenderTarget4);
-
-                    }
-                }
-                else
-                {
-                    // Naive Gaussian blur
-                    // restuaro el render target y el stencil
-                    device.DepthStencilSurface = pOldDS;
-                    device.SetRenderTarget(0, pOldRT);
-
-                    // dibujo el quad pp dicho :
-                    device.BeginScene();
-                    effect.Technique = "GaussianBlur";
-                    device.VertexFormat = CustomVertex.PositionTextured.Format;
-                    device.SetStreamSource(0, g_pVBV3D, 0);
-                    effect.SetValue("g_RenderTarget", g_pRenderTarget);
-
-                    device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, Color.Black, 1.0f, 0);
-                    effect.Begin(FX.None);
-                    effect.BeginPass(0);
-                    device.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
-                    effect.EndPass();
-                    effect.End();
-                }
-                GuiController.Instance.Text3d.drawText("FPS: " + HighResolutionTimer.Instance.FramesPerSecond, 0, 0, Color.Yellow);
-                device.EndScene();
+            // actualizo los valores para el proximo frame
+            foreach (TgcMesh m in allMesh)
+            {
+                antMatWorldView = m.Transform * device.Transform.View;
             }
+            Texture aux = g_pVel2;
+            g_pVel2 = g_pVel1;
+            g_pVel1 = aux;
+        }
+
 
         public void Close()
         {
             effect.Dispose();
             g_pRenderTarget.Dispose();
-            g_pRenderTarget4Aux.Dispose();
-            g_pRenderTarget4.Dispose();
-            g_pVBV3D.Dispose();
             g_pDepthStencil.Dispose();
+            g_pVBV3D.Dispose();
+            g_pVel1.Dispose();
+            g_pVel2.Dispose();
         }
     }
 

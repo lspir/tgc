@@ -245,14 +245,14 @@ namespace AlumnoEjemplos.NaveEspacial
             spaceShip.Scale = (escala);
             obbSpaceShip = TgcObb.computeFromAABB(spaceShip.BoundingBox);
             spaceShip.Position = new Vector3(500, 0, 200); //pos inicial
-            allMeshes.Add(spaceShip);
+            //allMeshes.Add(spaceShip);
 
             //AGREGO NAVE ENEMIGA
             naveEnemiga = sceneEnemigo.Meshes[0];
             naveEnemiga.Scale = (escala * 5);
             naveEnemiga.Position = new Vector3(600, 0, 200); //una pos inicial
             //naveEnemiga.AutoTransformEnable = false;
-            allMeshes.Add(naveEnemiga);
+            //allMeshes.Add(naveEnemiga);
 
 
             ///////////////MODIFIERS//////////////////
@@ -280,6 +280,12 @@ namespace AlumnoEjemplos.NaveEspacial
             //distancia del follow enemigo
             GuiController.Instance.Modifiers.addFloat("distEnemigo", 10f, 99f, 20f);
 
+            //Modifier para BoundingBox
+            GuiController.Instance.Modifiers.addBoolean("BoundingBox", "BoundingBox:", false);
+
+            //Modifier para MotionBlur
+            GuiController.Instance.Modifiers.addBoolean("MotionBlur", "MotionBlur:", true);
+
 
             //AGREGO LA CAMARA QUE LA SIGUE
             //Habilito la camara en 1era Persona
@@ -289,7 +295,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
 
             effectBlur = new BlurEffect();
-            effectBlur.Load();
+            effectBlur.Load(allMeshes);
 
 
             //seteo valor inicial de las variables del movimiento
@@ -340,7 +346,6 @@ namespace AlumnoEjemplos.NaveEspacial
 
             for (int i = 0; i < Disparos.Count; i += 1)
             {
-                
                 Disparos[i].renderModel.moveOrientedY(-1f);
                 Disparos[i].renderModel.render();
                 Disparos[i].incrementarTiempo(elapsedTime);
@@ -602,12 +607,6 @@ namespace AlumnoEjemplos.NaveEspacial
 
             spaceSphere.Position = spaceShip.Position;
 
-            sun.BoundingBox.render();
-            venus.BoundingBox.render();
-            moon.BoundingBox.render();
-            earth.BoundingBox.render();
-            jupiter.BoundingBox.render();
-            neptune.BoundingBox.render();
 
             //Limpiamos todas las transformaciones con la Matrix identidad
             d3dDevice.Transform.World = Matrix.Identity;
@@ -620,6 +619,32 @@ namespace AlumnoEjemplos.NaveEspacial
 
             text1.render();
 
+
+            //BoundingBox
+            bool showBB = (bool)GuiController.Instance.Modifiers["BoundingBox"];
+            if (showBB)
+            {
+                sun.BoundingBox.render();
+                venus.BoundingBox.render();
+                moon.BoundingBox.render();
+                earth.BoundingBox.render();
+                jupiter.BoundingBox.render();
+                neptune.BoundingBox.render();
+                naveEnemiga.BoundingBox.render();
+            }
+
+            //EfectoShader
+            bool shaderMB = (bool)GuiController.Instance.Modifiers["MotionBlur"];
+            if (shaderMB)
+            {
+                if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W)
+                    && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space)
+                    && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.S))
+                {
+                    effectBlur.Render(elapsedTime);
+                    spaceShip.render();
+                }
+            }
 
             //Iniciar dibujado de todos los Sprites de la escena
             GuiController.Instance.Drawer2D.beginDrawSprite();
@@ -635,13 +660,16 @@ namespace AlumnoEjemplos.NaveEspacial
                     actualStar.Update(elapsedTime);
                     actualStar.Render();
                 }
-
-                effectBlur.Render(elapsedTime, allMeshes);
             }
 
             //Finalizar el dibujado de Sprites
             GuiController.Instance.Drawer2D.endDrawSprite();
 
+
+            foreach (TgcMesh m in allMeshes)
+            {
+                m.Technique = "DefaultTechnique";
+            }
         }
 
         private void reducirVida(TgcMesh spaceShip)
