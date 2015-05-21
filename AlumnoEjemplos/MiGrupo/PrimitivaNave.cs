@@ -92,6 +92,8 @@ namespace AlumnoEjemplos.NaveEspacial
         BlurEffect effectBlur;
         List<TgcMesh> allMeshes;
         float vidaNave;
+        float vidaEnemigo;
+        float vidaEnemigoTotal;
 
 
         public override string getCategory()
@@ -176,6 +178,10 @@ namespace AlumnoEjemplos.NaveEspacial
             //Crear Sprites
             vidaNave = 100f;
             vidaTotal = 100f;
+
+            vidaEnemigo = 50f;
+            vidaEnemigoTotal = 50f;
+
             spriteLife = new TgcSprite();
             spriteLife.Texture = TgcTexture.createTexture(GuiController.Instance.AlumnoEjemplosMediaDir + "\\Texturas\\LifeBar.png");
             spriteLife.Scaling = new Vector2(0.3f, -0.5f);
@@ -476,35 +482,38 @@ namespace AlumnoEjemplos.NaveEspacial
             GuiController.Instance.ThirdPersonCamera.rotateY(AngleZRotation * elapsedTime);
 
             //logica AI
-            Vector3 targetDeEnemigo = Vector3.Subtract(spaceShip.Position, naveEnemiga.Position);
-            float enemySpeed = maxSpeed * 0.9f; //que sea un poco mas lenta
-            if (DistanceAtoB(spaceShip.Position, naveEnemiga.Position) < 200) //si me encuentro a X unidades de distancia, me detecta y se activa
+            if (vidaEnemigo > 0)
             {
-                if (DistanceAtoB(spaceShip.Position, naveEnemiga.Position) < 80 && timeSinceLastEnemyShot > 1f) //rango de Disparo
+                Vector3 targetDeEnemigo = Vector3.Subtract(spaceShip.Position, naveEnemiga.Position);
+                float enemySpeed = maxSpeed * 0.9f; //que sea un poco mas lenta
+                if (DistanceAtoB(spaceShip.Position, naveEnemiga.Position) < 200) //si me encuentro a X unidades de distancia, me detecta y se activa
                 {
-                    Bullet disparoTempE = crearBalaPara(naveEnemiga);
-                    DisparosEnemy.Add(disparoTempE);
-                    timeSinceLastEnemyShot = 0f;
+                    if (DistanceAtoB(spaceShip.Position, naveEnemiga.Position) < 80 && timeSinceLastEnemyShot > 1f) //rango de Disparo
+                    {
+                        Bullet disparoTempE = crearBalaPara(naveEnemiga);
+                        DisparosEnemy.Add(disparoTempE);
+                        timeSinceLastEnemyShot = 0f;
+                    }
+
+                    if (DistanceAtoB(spaceShip.Position, naveEnemiga.Position) > 50) //muy cerca la freno pero sino que me siga
+                    {
+                        naveEnemiga.move(Vector3.Normalize(targetDeEnemigo) * maxSpeed);
+                    }
+
+                    naveEnemiga.Rotation = LookAt(naveEnemiga.Position, spaceShip.Position); //rotacion donde la nave "me mira"
                 }
 
-                if (DistanceAtoB(spaceShip.Position, naveEnemiga.Position) > 50) //muy cerca la freno pero sino que me siga
+                for (int i = 0; i < DisparosEnemy.Count; i += 1) //for de balas enemigas
                 {
-                    naveEnemiga.move(Vector3.Normalize(targetDeEnemigo) * maxSpeed);
-                }
+                    DisparosEnemy[i].renderModel.moveOrientedY(-1f);
+                    DisparosEnemy[i].renderModel.render();
+                    DisparosEnemy[i].incrementarTiempo(elapsedTime);
 
-                naveEnemiga.Rotation = LookAt(naveEnemiga.Position, spaceShip.Position); //rotacion donde la nave "me mira"
-            }
-
-            for (int i = 0; i < DisparosEnemy.Count; i += 1) //for de balas enemigas
-            {
-                DisparosEnemy[i].renderModel.moveOrientedY(-1f);
-                DisparosEnemy[i].renderModel.render();
-                DisparosEnemy[i].incrementarTiempo(elapsedTime);
-
-                if (DisparosEnemy[i].getDone()) //si la bala hace X segundos que esta en el juego, ya viajo lejos y no me interesa, la destruyo
-                {
-                    DisparosEnemy[i].renderModel.dispose();
-                    DisparosEnemy.Remove(DisparosEnemy[i]);
+                    if (DisparosEnemy[i].getDone()) //si la bala hace X segundos que esta en el juego, ya viajo lejos y no me interesa, la destruyo
+                    {
+                        DisparosEnemy[i].renderModel.dispose();
+                        DisparosEnemy.Remove(DisparosEnemy[i]);
+                    }
                 }
             }
 
@@ -527,6 +536,21 @@ namespace AlumnoEjemplos.NaveEspacial
                         reducirVida(spaceShip);
                         DisparosEnemy[i].incrementarTiempo(5f);
                     }
+            }
+
+            for (int i = 0; i < Disparos.Count; i += 1) //for de balas enemigas
+            {
+                misil = Disparos[i].renderModel;
+                if (Math.Sqrt(Math.Pow(misil.Position.X - naveEnemiga.Position.X, 2.0) + Math.Pow(misil.Position.Y - naveEnemiga.Position.Y, 2.0) + Math.Pow(misil.Position.Z - naveEnemiga.Position.Z, 2.0)) <= largoBala)
+                {
+                    vidaEnemigo -= 25f;
+                    Disparos[i].incrementarTiempo(5f);
+                }
+            }
+
+            if (vidaEnemigo < 1)
+            {
+                //naveEnemiga.dispose();
             }
 
 
@@ -591,10 +615,10 @@ namespace AlumnoEjemplos.NaveEspacial
             //RENDER
             //Siempre primero hacer todos los cálculos de lógica e input y luego al final dibujar todo (ciclo update-render)
             spaceShip.render();
-            naveEnemiga.render();
-            text1.render();
 
-            naveEnemiga.BoundingBox.render();
+            if (vidaEnemigo > 0) { naveEnemiga.render(); naveEnemiga.BoundingBox.render(); }
+
+            text1.render();
 
 
             //Iniciar dibujado de todos los Sprites de la escena
