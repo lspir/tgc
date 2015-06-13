@@ -1,9 +1,10 @@
 # tgc
 Trabajo Practico TGC-1c-2015
 
-  Clavelli Lucas, Gomez Luboz Martin, Spir Leandro, Viviani Pablo
+  Gomez Luboz Martin, Spir Leandro, Viviani Pablo
 
 TEMA: Spaceship
+GRUPO: Nº 04 - VORTEX
 
 <Funcionalidades obligatorias para 1ra entrega:     	jueves 21 de mayo	(presencial)
   

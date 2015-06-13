@@ -41,6 +41,14 @@ namespace AlumnoEjemplos.NaveEspacial
         const float MOON_ORBIT_OFFSET = 90;
         const float JUPITER_ORBIT_OFFSET = 1500;
         const float NEPTUNE_ORBIT_OFFSET = 1900;
+        
+        float axisRotation = 0f;
+        float earthAxisRotation = 0f;
+        float venusOrbitRotation = 0f;
+        float earthOrbitRotation = 0f;
+        float moonOrbitRotation = 0f;
+        float jupiterOrbitRotation = 0f;
+        float neptuneOrbitRotation = 0f;
 
         TgcMesh sun;
         TgcMesh venus;
@@ -51,14 +59,6 @@ namespace AlumnoEjemplos.NaveEspacial
 
         TgcMesh spaceSphere;
         public Size screenSize;
-
-        float axisRotation = 0f;
-        float earthAxisRotation = 0f;
-        float venusOrbitRotation = 0f;
-        float earthOrbitRotation = 0f;
-        float moonOrbitRotation = 0f;
-        float jupiterOrbitRotation = 0f;
-        float neptuneOrbitRotation = 0f;
 
         //shooting related stuff
         List<Bullet> Disparos;
@@ -93,6 +93,9 @@ namespace AlumnoEjemplos.NaveEspacial
 
         List<Star> gameStars;
         const int starCount = 50; //La cantidad maxima de estrellas simultaneas.
+        
+        List<Asteroids> gameAsteroids;
+        const int asteroidCount = 5; //La cantidad maxima de asteroides simultaneos.
 
         BlurEffect effectBlur;
         List<TgcMesh> blurredMeshes;
@@ -214,6 +217,17 @@ namespace AlumnoEjemplos.NaveEspacial
                 actualStar.Load();
                 gameStars.Add(actualStar);
             } 
+            
+            //Creo la lista de Asteroides.
+            gameAsteroids = new List<Asteroids>();
+            for (int numberAsteroid = 0; numberAsteroid < asteroidCount; numberAsteroid++)
+            {
+                Asteroids actualAsteroid;
+
+                actualAsteroid = new Asteroids();
+                actualAsteroid.Load();
+                gameAsteroids.Add(actualAsteroid);
+            }
 
             //TEXTO de explicacion
             text1 = new TgcText2d();
@@ -270,7 +284,7 @@ namespace AlumnoEjemplos.NaveEspacial
             GuiController.Instance.Modifiers.addBoolean("BoundingBox", "BoundingBox:", false);
 
             //Modifier para MotionBlur
-            GuiController.Instance.Modifiers.addBoolean("MotionBlur", "MotionBlur:", true);
+            GuiController.Instance.Modifiers.addBoolean("MotionBlur", "MotionBlur:", false);
 
 
             //AGREGO LA CAMARA QUE LA SIGUE
@@ -288,22 +302,7 @@ namespace AlumnoEjemplos.NaveEspacial
             Colisionables.Add(moon.BoundingBox);
             Colisionables.Add(jupiter.BoundingBox);
             Colisionables.Add(neptune.BoundingBox);
-            /*sun.BoundingBox.transform(getSunTransform(0f));
-            venus.BoundingBox.transform(getVenusTransform(0f));
-            earth.BoundingBox.transform(getEarthTransform(0f));
-            moon.BoundingBox.transform(getMoonTransform(0f, getEarthTransform(0f)));
-            jupiter.BoundingBox.transform(getJuputerTransform(0f));
-            neptune.BoundingBox.transform(getNeptuneTransform(0f));
-                      foreach (TgcMesh unMesh in scene.Meshes)
-                      {
-                          if (unMesh == spaceShip) { }
-                          else
-                          {
-                              //Colisionables.Add(unMesh.BoundingBox);
-                          }
-                      }
-             */
-
+            
 
             //activo el Blur
             effectBlur = new BlurEffect();
@@ -560,22 +559,10 @@ namespace AlumnoEjemplos.NaveEspacial
                 }
             }
 
-            if (vidaEnemigo < 1)
-            {
-                //naveEnemiga.dispose();
-            }
 
 
-            //checkeo colisiones
-            foreach (TgcBoundingBox col in Colisionables)
-            {
-                if (TgcCollisionUtils.testObbAABB(obbSpaceShip, col))
-                {
-                    spaceShip.Position = lastPos; obbSpaceShip.move(spaceShip.Position - obbSpaceShip.Position);
-                }
-            }
 
-
+            text1.render();
 
             //Actualizar transformaciones y renderizar planetas
 
@@ -612,6 +599,15 @@ namespace AlumnoEjemplos.NaveEspacial
             jupiterOrbitRotation += JUPITER_ORBIT_SPEED * elapsedTime;
             neptuneOrbitRotation += NEPTUNE_ORBIT_SPEED * elapsedTime;
 
+            //checkeo colisiones
+            foreach (TgcBoundingBox col in Colisionables)
+            {
+                if (TgcCollisionUtils.testObbAABB(obbSpaceShip, col))
+                {
+                    spaceShip.Position = lastPos; obbSpaceShip.move(spaceShip.Position - obbSpaceShip.Position);
+                }
+            }
+
             spaceSphere.Position = spaceShip.Position;
 
 
@@ -622,9 +618,13 @@ namespace AlumnoEjemplos.NaveEspacial
             //Siempre primero hacer todos los cálculos de lógica e input y luego al final dibujar todo (ciclo update-render)
             spaceShip.render();
 
-            if (vidaEnemigo > 0) { naveEnemiga.render(); naveEnemiga.BoundingBox.render(); }
+            if (vidaEnemigo > 0) { naveEnemiga.render(); 
+                                 //naveEnemiga.BoundingBox.render();
+                                 }
+            if (vidaEnemigo < 1) {
+                                 //naveEnemiga.dispose();
+                                 }
 
-            text1.render();
 
 
             //BoundingBox
@@ -670,6 +670,13 @@ namespace AlumnoEjemplos.NaveEspacial
             //Finalizado el dibujado de Sprites
 
 
+            foreach (Asteroids actualAsteroid in gameAsteroids)
+                {
+                    actualAsteroid.Update(elapsedTime);
+                    actualAsteroid.Render();
+                }
+
+
             foreach (TgcMesh m in blurredMeshes)
             {
                 m.Technique = "DefaultTechnique";
@@ -698,6 +705,11 @@ namespace AlumnoEjemplos.NaveEspacial
                 actualStar.Close();
             }
             effectBlur.Close();
+            
+            foreach (Asteroids actualAsteroid in gameAsteroids)
+            {
+                actualAsteroid.Close();
+            }
         }
 
 
@@ -763,11 +775,6 @@ namespace AlumnoEjemplos.NaveEspacial
             disparo = new Bullet(disparoModel);
             return disparo;
         }
-
-        
     }
-
-
-
 
 }
