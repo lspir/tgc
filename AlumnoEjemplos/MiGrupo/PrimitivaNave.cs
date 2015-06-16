@@ -20,12 +20,12 @@ namespace AlumnoEjemplos.NaveEspacial
     public class NaveEspacial : TgcExample
     {
 
-        readonly Vector3 SUN_SCALE = new Vector3(12, 12, 12);
-        readonly Vector3 VENUS_SCALE = new Vector3(2.5f, 2.5f, 2.5f);
-        readonly Vector3 EARTH_SCALE = new Vector3(3, 3, 3);
-        readonly Vector3 MOON_SCALE = new Vector3(0.5f, 0.5f, 0.5f);
-        readonly Vector3 JUPITER_SCALE = new Vector3(5, 5, 5);
-        readonly Vector3 NEPTUNE_SCALE = new Vector3(3.5f, 3.5f, 3.5f);
+        readonly Vector3 SUN_SCALE = new Vector3(30, 30, 30);
+        readonly Vector3 VENUS_SCALE = new Vector3(6, 6, 6);
+        readonly Vector3 EARTH_SCALE = new Vector3(8, 8, 8);
+        readonly Vector3 MOON_SCALE = new Vector3(0.4f, 0.4f, 0.4f);
+        readonly Vector3 JUPITER_SCALE = new Vector3(12, 12, 12);
+        readonly Vector3 NEPTUNE_SCALE = new Vector3(9, 9, 9);
         readonly Vector3 SPACE_SCALE = new Vector3(200, 200, 200);
 
         const float AXIS_ROTATION_SPEED = 0.1f;
@@ -36,11 +36,11 @@ namespace AlumnoEjemplos.NaveEspacial
         const float JUPITER_ORBIT_SPEED = 0.08f;
         const float NEPTUNE_ORBIT_SPEED = 0.05f;
 
-        const float VENUS_ORBIT_OFFSET = 600;
-        const float EARTH_ORBIT_OFFSET = 1000;
-        const float MOON_ORBIT_OFFSET = 90;
-        const float JUPITER_ORBIT_OFFSET = 1500;
-        const float NEPTUNE_ORBIT_OFFSET = 1900;
+        const float VENUS_ORBIT_OFFSET = 1200;
+        const float EARTH_ORBIT_OFFSET = 1800;
+        const float MOON_ORBIT_OFFSET = 70;
+        const float JUPITER_ORBIT_OFFSET = 3000;
+        const float NEPTUNE_ORBIT_OFFSET = 4000;
         
         float axisRotation = 0f;
         float earthAxisRotation = 0f;
@@ -136,6 +136,7 @@ namespace AlumnoEjemplos.NaveEspacial
             //Cargo el loader de Scenes y los Meshes
             TgcSceneLoader loader = new TgcSceneLoader();
             TgcScene scene = loader.loadSceneFromFile(GuiController.Instance.AlumnoEjemplosMediaDir + "NaveStarWars\\NaveStarWars-TgcScene.xml");
+            //TgcScene scene = loader.loadSceneFromFile(GuiController.Instance.AlumnoEjemplosMediaDir + "dark_fighter\\dark_fighter-TgcScene.xml");
             TgcScene sceneEnemigo = loader.loadSceneFromFile(GuiController.Instance.AlumnoEjemplosMediaDir + "xWing\\xWing-TgcScene.xml");
 
             string sphere = GuiController.Instance.ExamplesMediaDir + "ModelosTgc\\Sphere\\Sphere-TgcScene.xml";
@@ -144,23 +145,23 @@ namespace AlumnoEjemplos.NaveEspacial
             blurredMeshes.Add(sun);
 
             venus = loader.loadSceneFromFile(sphere).Meshes[0];
-            venus.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\VenusTexture.jpg") });
+            venus.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\VenusTexture.png") });
             blurredMeshes.Add(venus);
 
             earth = loader.loadSceneFromFile(sphere).Meshes[0];
-            earth.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\EarthTexture.jpg") });
+            earth.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\EarthTexture.png") });
             blurredMeshes.Add(earth);
 
             moon = loader.loadSceneFromFile(sphere).Meshes[0];
-            moon.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\MoonTexture.jpg") });
+            moon.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\MoonTexture.png") });
             blurredMeshes.Add(moon);
 
             jupiter = loader.loadSceneFromFile(sphere).Meshes[0];
-            jupiter.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\JupiterTexture.jpg") });
+            jupiter.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\JupiterTexture.png") });
             blurredMeshes.Add(jupiter);
 
             neptune = loader.loadSceneFromFile(sphere).Meshes[0];
-            neptune.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\NeptuneTexture.jpg") });
+            neptune.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\NeptuneTexture.png") });
             blurredMeshes.Add(neptune);
 
             spaceSphere = loader.loadSceneFromFile(sphere).Meshes[0];
@@ -244,13 +245,13 @@ namespace AlumnoEjemplos.NaveEspacial
             Vector3 escala = new Vector3(0.05f, 0.05f, 0.05f); //en lugar de bajar la escala a todo, bajo a la nave y evito problemas de numeros gigantes
             spaceShip.Scale = (escala);
             obbSpaceShip = TgcObb.computeFromAABB(spaceShip.BoundingBox);
-            spaceShip.Position = new Vector3(500, 0, 200); //pos inicial
+            spaceShip.Position = new Vector3(700, 0, 300); //pos inicial
             //blurredMeshes.Add(spaceShip);
 
             //AGREGO NAVE ENEMIGA
             naveEnemiga = sceneEnemigo.Meshes[0];
             naveEnemiga.Scale = (escala * 5);
-            naveEnemiga.Position = new Vector3(600, 0, 200); //una pos inicial
+            naveEnemiga.Position = new Vector3(800, 0, 200); //una pos inicial
             //naveEnemiga.AutoTransformEnable = false;
             //blurredMeshes.Add(naveEnemiga);
 
