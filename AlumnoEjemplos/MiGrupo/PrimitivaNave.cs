@@ -11,6 +11,7 @@ using TgcViewer.Utils.TgcGeometry;
 using TgcViewer.Utils.TgcSceneLoader;
 using TgcViewer.Utils.Terrain;
 using TgcViewer.Utils._2D;
+using TgcViewer.Utils.Sound;
 using TgcViewer.Utils;
 using AlumnoEjemplos.MiGrupo;
 
@@ -79,6 +80,8 @@ namespace AlumnoEjemplos.NaveEspacial
 
 
         TgcText2d text1;    //textoExplicacion
+        TgcStaticSound ambientSound;   //musica de fondo
+        TgcStaticSound shotSound;   //ruido de disparo
         TgcSprite spriteLife;   //barra de vida
         float vidaTotal = 100f;
         float vidaNave;
@@ -135,6 +138,13 @@ namespace AlumnoEjemplos.NaveEspacial
             //GuiController.Instance: acceso principal a todas las herramientas del Framework
             //Device de DirectX para crear primitivas
             Device d3dDevice = GuiController.Instance.D3dDevice;
+
+            //Cargar sonidos
+            ambientSound = new TgcStaticSound();
+            ambientSound.loadSound(GuiController.Instance.AlumnoEjemplosMediaDir + "Sounds\\LightCycle_ApproachingNirvana.wav");
+            shotSound = new TgcStaticSound();
+            shotSound.loadSound(GuiController.Instance.AlumnoEjemplosMediaDir + "Sounds\\Disparo.wav");
+
 
             //inicio la lista
             Disparos = new List<Bullet>();
@@ -348,6 +358,8 @@ namespace AlumnoEjemplos.NaveEspacial
 
             spaceSphere.render(); //la rendereo primero porque es el fondo
 
+            ambientSound.play(true);   //inicio la musica de fondo, en modo loop
+
             //cada frame voy actualizando el tiempo entre disparos
             timeSinceLastShot += elapsedTime;
             timeSinceLastEnemyShot += elapsedTime;
@@ -358,6 +370,7 @@ namespace AlumnoEjemplos.NaveEspacial
             if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_LEFT) && timeSinceLastShot > 0.5f) //reviso tecla y el intervalo de disparo
             {
                 Bullet disparoTemp = crearBalaPara(spaceShip);
+                shotSound.play();
                 Disparos.Add(disparoTemp);
                 timeSinceLastShot = 0f;
             }
@@ -744,6 +757,9 @@ namespace AlumnoEjemplos.NaveEspacial
             effectBlur.Close();
 
             effectLight.Close();
+
+            ambientSound.dispose();
+            shotSound.dispose();
         }
 
 
