@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using TgcViewer.Example;
@@ -14,59 +14,47 @@ namespace AlumnoEjemplos.MiGrupo
 {
     class Asteroids
     {
-        TgcMesh asteroid;
-        float movementTimer = 0f;
-        float timeForNewMovement = 50f;
-        Vector3 movement;
-        Device d3dDevice = GuiController.Instance.D3dDevice;
+        public TgcSphere renderModel;
+        public float movementTimer = 0f;
+        public float timeForNewMovement = 5f;
+        public float minimumOffset = 20f;
+        public float offsetX = 1;
+        public float offsetY = 1;
+        public float offsetZ = 1;
 
-        public void Load()
+        public Asteroids(TgcSphere unModelo)
         {
-            //Cargo el loader de Scenes y los Meshes
-            TgcSceneLoader loader = new TgcSceneLoader();
-            string sphere = GuiController.Instance.ExamplesMediaDir + "ModelosTgc\\Sphere\\Sphere-TgcScene.xml";
-            asteroid = loader.loadSceneFromFile(sphere).Meshes[0];
-            asteroid.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\AsteroidTexture.jpg") });
-
-            Random rndScale = new Random();
-            asteroid.Scale = (new Vector3(6 + (float)rndScale.NextDouble(), 6 + (float)rndScale.NextDouble(), 6 + (float)rndScale.NextDouble()));
-            Random rndPosition = new Random();
-            asteroid.Position = (new Vector3(100 + (float)rndPosition.NextDouble(), 100 + (float)rndPosition.NextDouble(), (float)rndPosition.NextDouble()));
-
-            movement = getNewMovement();
-
-            //return asteroid.BoundingBox;
+            renderModel = unModelo;
         }
-        public void Update(float elapsedTime)
+
+        public void Update(float elapsedTime) //Asigna con el paso del tiempo un nuevo valor de posicion futuro, obtenido con la funcion getNewMovement()
         {
-            if (movementTimer == 0f)
+            if (movementTimer <= 0f)
             {
                 Random rndNewMovement = new Random();
 
-                movement = getNewMovement();
-                movementTimer = timeForNewMovement * (float)rndNewMovement.NextDouble();
+                getNewMovement();
+                movementTimer = timeForNewMovement * ((float)rndNewMovement.NextDouble()+0.1f);
             }
 
             movementTimer -= elapsedTime;
-            asteroid.move(movement);
         }
 
-        public void Render()
-        {
-            asteroid.render();
-        }
-
-        public void Close()
-        {
-            asteroid.dispose();
-        }
-
-        public Vector3 getNewMovement(){
+        public void getNewMovement()    //Da futuras posiciones random, asignadas por un valor de offset minimo y una dirección que depende de otro valor random.
+        {   
             Random rndMovementX = new Random();
+            Random rndDirectionX = new Random();
             Random rndMovementY = new Random();
+            Random rndDirectionY = new Random();
             Random rndMovementZ = new Random();
+            Random rndDirectionZ = new Random();
 
-            return new Vector3((float)rndMovementX.NextDouble(), (float)rndMovementY.NextDouble(), (float)rndMovementZ.NextDouble());
+            if ((float)rndDirectionX.NextDouble() < 0.5f)   { offsetX = -minimumOffset * ((float)rndMovementX.NextDouble() + 0.1f); }
+            else                                            { offsetX = minimumOffset * ((float)rndMovementX.NextDouble() + 0.1f); }
+            if ((float)rndDirectionY.NextDouble() < 0.5f)   { offsetY = -minimumOffset * ((float)rndMovementY.NextDouble() + 0.1f); }
+            else                                            { offsetY = minimumOffset * ((float)rndMovementY.NextDouble() + 0.1f); }
+            if ((float)rndDirectionX.NextDouble() < 0.5f)   { offsetZ = -minimumOffset * ((float)rndMovementZ.NextDouble() + 0.1f); }
+            else                                            { offsetZ = minimumOffset * ((float)rndMovementZ.NextDouble() + 0.1f); }
         }
     }
 }
