@@ -100,6 +100,11 @@ namespace AlumnoEjemplos.NaveEspacial
         BlurEffect effectBlur;
         List<TgcMesh> blurredMeshes;
 
+        LightEffect effectLight;
+        Vector3 lightOffset1;
+        Vector3 lightOffset2;
+        TgcBox unaCaja;
+        TgcBox unaCaja2;
 
 
         public override string getCategory()
@@ -245,26 +250,26 @@ namespace AlumnoEjemplos.NaveEspacial
             Vector3 escala = new Vector3(0.05f, 0.05f, 0.05f); //en lugar de bajar la escala a todo, bajo a la nave y evito problemas de numeros gigantes
             spaceShip.Scale = (escala);
             obbSpaceShip = TgcObb.computeFromAABB(spaceShip.BoundingBox);
-            spaceShip.Position = new Vector3(700, 0, 300); //pos inicial
+            spaceShip.Position = new Vector3(800, 0, 700); //pos inicial
             //blurredMeshes.Add(spaceShip);
 
             //AGREGO NAVE ENEMIGA
             naveEnemiga = sceneEnemigo.Meshes[0];
             naveEnemiga.Scale = (escala * 5);
-            naveEnemiga.Position = new Vector3(800, 0, 200); //una pos inicial
+            naveEnemiga.Position = new Vector3(800, 10, -600); //una pos inicial
             //naveEnemiga.AutoTransformEnable = false;
             //blurredMeshes.Add(naveEnemiga);
 
 
             ///////////////MODIFIERS//////////////////
             //lo que va incrementando la aceleracion
-            GuiController.Instance.Modifiers.addFloat("accel", 0f, 2f, 0.2f);
+            GuiController.Instance.Modifiers.addFloat("accel", 0f, 2f, 0.3f);
 
             //lo que va incrementando la aceleracion
             GuiController.Instance.Modifiers.addFloat("breaks", 0f, 5f, 0.5f);
 
             //Para la Rotacion de la Caja a los costados (Float)
-            GuiController.Instance.Modifiers.addFloat("rotationY", 0f, 2f, 0.2f);
+            GuiController.Instance.Modifiers.addFloat("rotationY", 0f, 2f, 0.5f);
 
             //Para la Rotacion de la Caja arriba y abajo (Float)
             GuiController.Instance.Modifiers.addFloat("rotationX", 0f, 10f, 2f);
@@ -308,6 +313,13 @@ namespace AlumnoEjemplos.NaveEspacial
             //activo el Blur
             effectBlur = new BlurEffect();
             effectBlur.Load(blurredMeshes);
+
+            effectLight = new LightEffect();
+            effectLight.Iniciar(spaceShip);
+            lightOffset1 = new Vector3(1f, 0.5f, 0);
+            lightOffset2 = new Vector3(0.5f, -0.5f, 0);
+            unaCaja = TgcBox.fromSize(new Vector3(1, 1, 1), Color.White);
+            unaCaja2 = TgcBox.fromSize(new Vector3(1, 1, 1), Color.White);
         }
 
 
@@ -650,6 +662,16 @@ namespace AlumnoEjemplos.NaveEspacial
                     effectBlur.Render(elapsedTime);
                     spaceShip.render();
                 }
+                else
+                {
+                    unaCaja.Position = spaceShip.Position + lightOffset1;
+                    unaCaja2.Position = spaceShip.Position + lightOffset2;
+
+                    unaCaja.render();
+                    unaCaja2.render();
+
+                    effectLight.Render(elapsedTime, spaceShip.Position + lightOffset1, spaceShip.Position + lightOffset2);
+                }
             }
 
             //Iniciar dibujado de todos los Sprites de la escena
@@ -706,6 +728,8 @@ namespace AlumnoEjemplos.NaveEspacial
                 actualStar.Close();
             }
             effectBlur.Close();
+
+            effectLight.Close();
             
             foreach (Asteroids actualAsteroid in gameAsteroids)
             {
