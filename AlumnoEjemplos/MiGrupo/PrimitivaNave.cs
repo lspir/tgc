@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using TgcViewer.Example;
@@ -27,6 +27,7 @@ namespace AlumnoEjemplos.NaveEspacial
         readonly Vector3 JUPITER_SCALE = new Vector3(12, 12, 12);
         readonly Vector3 NEPTUNE_SCALE = new Vector3(9, 9, 9);
         readonly Vector3 SPACE_SCALE = new Vector3(200, 200, 200);
+        readonly float ASTEROID_RADIO = 5f;
 
         const float AXIS_ROTATION_SPEED = 0.1f;
         const float EARTH_AXIS_ROTATION_SPEED = 1f;
@@ -41,6 +42,7 @@ namespace AlumnoEjemplos.NaveEspacial
         const float MOON_ORBIT_OFFSET = 70;
         const float JUPITER_ORBIT_OFFSET = 3000;
         const float NEPTUNE_ORBIT_OFFSET = 4000;
+        const float ASTEROID_ORBIT_MAX_DISTANCE = 1500f;
         
         float axisRotation = 0f;
         float earthAxisRotation = 0f;
@@ -96,6 +98,7 @@ namespace AlumnoEjemplos.NaveEspacial
         
         List<Asteroids> gameAsteroids;
         const int asteroidCount = 5; //La cantidad maxima de asteroides simultaneos.
+        float asteroidMaxSpeed = 1.2f;
 
         BlurEffect effectBlur;
         List<TgcMesh> blurredMeshes;
@@ -230,8 +233,7 @@ namespace AlumnoEjemplos.NaveEspacial
             {
                 Asteroids actualAsteroid;
 
-                actualAsteroid = new Asteroids();
-                actualAsteroid.Load();
+                actualAsteroid = crearAsteroide();
                 gameAsteroids.Add(actualAsteroid);
             }
 
@@ -693,10 +695,19 @@ namespace AlumnoEjemplos.NaveEspacial
             //Finalizado el dibujado de Sprites
 
 
-            foreach (Asteroids actualAsteroid in gameAsteroids)
+            //muevo y renderizo los asteroides
+            for (int i = 0; i < gameAsteroids.Count; i += 1)  //Para cada asteroide obtiene su valor de Offset en 3D, calcula que no se aleje más de su órbita maxima y lo mueve en esa dirección según su velocidad
                 {
-                    actualAsteroid.Update(elapsedTime);
-                    actualAsteroid.Render();
+                    gameAsteroids[i].Update(elapsedTime);
+                    
+                    float astFutPosX = (gameAsteroids[i].offsetX);
+                    float astFutPosY = (gameAsteroids[i].offsetY);
+                    float astFutPosZ = (gameAsteroids[i].offsetZ);
+                    if (gameAsteroids[i].renderModel.Position.X + astFutPosX < -ASTEROID_ORBIT_MAX_DISTANCE | astFutPosX > ASTEROID_ORBIT_MAX_DISTANCE) { astFutPosX = -astFutPosX; }
+                    if (gameAsteroids[i].renderModel.Position.Y + astFutPosY < -ASTEROID_ORBIT_MAX_DISTANCE | astFutPosY > ASTEROID_ORBIT_MAX_DISTANCE) { astFutPosY = -astFutPosY; }
+                    if (gameAsteroids[i].renderModel.Position.Z + astFutPosZ < -ASTEROID_ORBIT_MAX_DISTANCE | astFutPosZ > ASTEROID_ORBIT_MAX_DISTANCE) { astFutPosZ = -astFutPosZ; }
+                    gameAsteroids[i].renderModel.move(new Vector3(astFutPosX * asteroidMaxSpeed * elapsedTime, astFutPosY * asteroidMaxSpeed * elapsedTime, astFutPosZ * asteroidMaxSpeed * elapsedTime));
+                    gameAsteroids[i].renderModel.render();
                 }
 
 
@@ -727,14 +738,12 @@ namespace AlumnoEjemplos.NaveEspacial
             {
                 actualStar.Close();
             }
+            
+            for (int i = 0; i < gameAsteroids.Count; i += 1)  { gameAsteroids[i].renderModel.dispose();}
+            
             effectBlur.Close();
 
             effectLight.Close();
-            
-            foreach (Asteroids actualAsteroid in gameAsteroids)
-            {
-                actualAsteroid.Close();
-            }
         }
 
 
@@ -799,6 +808,28 @@ namespace AlumnoEjemplos.NaveEspacial
             disparoModel.Rotation.Multiply(0f);
             disparo = new Bullet(disparoModel);
             return disparo;
+        }
+        
+        
+        Asteroids crearAsteroide()
+        {
+            Asteroids asteroide;
+            TgcSphere asteroideModel;
+            Device d3dDevice = GuiController.Instance.D3dDevice;
+
+            asteroideModel = new TgcSphere();
+            asteroideModel.setTexture(TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\AsteroidTexture.jpg"));
+            Random rndScale = new Random();
+            asteroideModel.Radius = ASTEROID_RADIO + 10 * ((float)rndScale.NextDouble());
+            Random rndPosition = new Random();
+            asteroideModel.Position = (new Vector3(600 * ((float)rndPosition.NextDouble() + 0.1f), 600 * ((float)rndPosition.NextDouble()+0.1f), 600 * ((float)rndPosition.NextDouble()+0.1f)));
+            asteroideModel.RenderEdges = false;
+            asteroideModel.Inflate = true;
+            asteroideModel.BasePoly = TgcSphere.eBasePoly.ICOSAHEDRON;
+            asteroideModel.LevelOfDetail = 0;
+            asteroideModel.updateValues();
+            asteroide = new Asteroids(asteroideModel);
+            return asteroide;
         }
     }
 
