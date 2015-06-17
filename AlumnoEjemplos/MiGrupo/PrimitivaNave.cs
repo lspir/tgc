@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using TgcViewer.Example;
@@ -318,8 +318,8 @@ namespace AlumnoEjemplos.NaveEspacial
 
             effectLight = new LightEffect();
             effectLight.Iniciar(spaceShip);
-            lightOffset1 = new Vector3(1f, 0.5f, 0);
-            lightOffset2 = new Vector3(0.5f, -0.5f, 0);
+            lightOffset1 = new Vector3(1f, 1f, 0);
+            lightOffset2 = new Vector3(1f, -1f, 0);
             unaCaja = TgcBox.fromSize(new Vector3(1, 1, 1), Color.White);
             unaCaja2 = TgcBox.fromSize(new Vector3(1, 1, 1), Color.White);
         }

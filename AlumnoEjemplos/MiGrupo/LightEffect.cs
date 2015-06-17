@@ -57,22 +57,13 @@ namespace AlumnoEjemplos.MiGrupo
             lightColor = Color.Green; //probando nomas
             lightIntensity = 40f;
             lightAttenuation = 0.15f;
-            specularEx = 9f;
-            k_la = 0.5f;
+            specularEx = 15f;
+            k_la = 0.4f;
             k_ld = 0.6f;
             k_ls = 0.5f;
 
             usandoPhong = true; ;
 
-            if (!usandoPhong)
-            {
-                d3dDevice.Lights[0].Type = LightType.Point;
-                d3dDevice.Lights[0].Diffuse = Color.FromArgb(255, 255, 255, 255);
-                d3dDevice.Lights[0].Specular = Color.FromArgb(255, 255, 255, 255);
-                d3dDevice.Lights[0].Attenuation0 = 0.2f;
-                d3dDevice.Lights[0].Range = 1.0f;
-                d3dDevice.Lights[0].Enabled = true;
-            }
         }
 
         public void Render(float elapsedTime, Vector3 luz1, Vector3 luz2)
@@ -87,9 +78,9 @@ namespace AlumnoEjemplos.MiGrupo
             if (usandoPhong)
             {
 
-                mesh.Effect.SetValue("fvLightPosition1", TgcParserUtils.vector3ToFloat4Array(lightsPos[0]));
-                mesh.Effect.SetValue("fvLightPosition2", TgcParserUtils.vector3ToFloat4Array(lightsPos[1]));
-                mesh.Effect.SetValue("fvEyePosition", TgcParserUtils.vector3ToFloat4Array(GuiController.Instance.ThirdPersonCamera.getPosition()));
+                mesh.Effect.SetValue("fvLightPosition1", TgcParserUtils.vector3ToFloat3Array(lightsPos[0]));
+                mesh.Effect.SetValue("fvLightPosition2", TgcParserUtils.vector3ToFloat3Array(lightsPos[1]));
+                mesh.Effect.SetValue("fvEyePosition", TgcParserUtils.vector3ToFloat3Array(GuiController.Instance.ThirdPersonCamera.getPosition()));
                 mesh.Effect.SetValue("lightIntensity", lightIntensity);
                 mesh.Effect.SetValue("lightAttenuation", lightAttenuation);
 
@@ -100,10 +91,7 @@ namespace AlumnoEjemplos.MiGrupo
             }
             else
             {
-                device.SetRenderState(RenderStates.Lighting, true);
-                device.SetRenderState(RenderStates.SpecularEnable, true);
-                device.Lights[0].Position = lightsPos[0];
-                device.Lights[0].Update();
+
             }
 
             mesh.render();
