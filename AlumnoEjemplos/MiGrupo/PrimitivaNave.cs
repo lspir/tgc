@@ -140,8 +140,8 @@ namespace AlumnoEjemplos.NaveEspacial
 
             //Cargo el loader de Scenes y los Meshes
             TgcSceneLoader loader = new TgcSceneLoader();
-            TgcScene scene = loader.loadSceneFromFile(GuiController.Instance.AlumnoEjemplosMediaDir + "NaveStarWars\\NaveStarWars-TgcScene.xml");
-            //TgcScene scene = loader.loadSceneFromFile(GuiController.Instance.AlumnoEjemplosMediaDir + "dark_fighter\\dark_fighter-TgcScene.xml");
+            //TgcScene scene = loader.loadSceneFromFile(GuiController.Instance.AlumnoEjemplosMediaDir + "NaveStarWars\\NaveStarWars-TgcScene.xml");
+            TgcScene scene = loader.loadSceneFromFile(GuiController.Instance.AlumnoEjemplosMediaDir + "NaveStarWars\\darkfighter-TgcScene.xml");
             TgcScene sceneEnemigo = loader.loadSceneFromFile(GuiController.Instance.AlumnoEjemplosMediaDir + "xWing\\xWing-TgcScene.xml");
 
             string sphere = GuiController.Instance.ExamplesMediaDir + "ModelosTgc\\Sphere\\Sphere-TgcScene.xml";
@@ -250,13 +250,13 @@ namespace AlumnoEjemplos.NaveEspacial
             Vector3 escala = new Vector3(0.05f, 0.05f, 0.05f); //en lugar de bajar la escala a todo, bajo a la nave y evito problemas de numeros gigantes
             spaceShip.Scale = (escala);
             obbSpaceShip = TgcObb.computeFromAABB(spaceShip.BoundingBox);
-            spaceShip.Position = new Vector3(800, 0, 700); //pos inicial
+            spaceShip.Position = new Vector3(800, 0, 800); //pos inicial
             //blurredMeshes.Add(spaceShip);
 
             //AGREGO NAVE ENEMIGA
             naveEnemiga = sceneEnemigo.Meshes[0];
             naveEnemiga.Scale = (escala * 5);
-            naveEnemiga.Position = new Vector3(800, 10, -600); //una pos inicial
+            naveEnemiga.Position = new Vector3(800, 10, -700); //una pos inicial
             //naveEnemiga.AutoTransformEnable = false;
             //blurredMeshes.Add(naveEnemiga);
 
@@ -297,7 +297,7 @@ namespace AlumnoEjemplos.NaveEspacial
             //Habilito la camara en 1era Persona
             GuiController.Instance.ThirdPersonCamera.Enable = true;
             //Configurar a quien sigue y a que distancia Altura y Lejania
-            GuiController.Instance.ThirdPersonCamera.setCamera(spaceShip.Position, 5, 30);
+            GuiController.Instance.ThirdPersonCamera.setCamera(spaceShip.Position, 3, 10);
 
 
             //Para colisiones
