@@ -83,10 +83,11 @@ namespace AlumnoEjemplos.NaveEspacial
         TgcStaticSound ambientSound;   //musica de fondo
         TgcStaticSound shotSound;   //ruido de disparo
         TgcStaticSound beamSound;
+        TgcStaticSound impactSound;
         TgcSprite spriteLife;   //barra de vida
         float vidaTotal = 100f;
         float vidaNave;
-        float vidaEnemigoTotal = 50f;
+        float vidaEnemigoTotal = 100f;
         float vidaEnemigo;
         TgcSprite spriteNitro; //barra de nitro
         float nitroNaveTotal = 600f;
@@ -149,6 +150,8 @@ namespace AlumnoEjemplos.NaveEspacial
             shotSound.loadSound(GuiController.Instance.AlumnoEjemplosMediaDir + "Sounds\\Disparo.wav");
             beamSound = new TgcStaticSound();
             beamSound.loadSound(GuiController.Instance.AlumnoEjemplosMediaDir + "Sounds\\Beam.wav");
+            impactSound = new TgcStaticSound();
+            impactSound.loadSound(GuiController.Instance.AlumnoEjemplosMediaDir + "Sounds\\Impact.wav");
 
             //inicio la lista
             Disparos = new List<Bullet>();
@@ -214,7 +217,7 @@ namespace AlumnoEjemplos.NaveEspacial
             timeSinceLastEnemyShot = 10f;
 
             vidaNave = 100f;
-            vidaEnemigo = 50f;
+            vidaEnemigo = 100f;
             nitroNave = 600f;
 
 
@@ -337,7 +340,7 @@ namespace AlumnoEjemplos.NaveEspacial
             unaCaja = TgcBox.fromSize(new Vector3(1, 1, 1), Color.White);
             unaCaja2 = TgcBox.fromSize(new Vector3(1, 1, 1), Color.White);
 
-            disparoBeam = new Bullet(TgcBox.fromSize(new Vector3(0.1f, 0.1f, 10 * largoBala), TgcTexture.createTexture(GuiController.Instance.D3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\laserbeamblue.jpg")));
+            disparoBeam = new Bullet(TgcBox.fromSize(new Vector3(0.1f, 0.1f, 8 * largoBala), TgcTexture.createTexture(GuiController.Instance.D3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\laserbeamblue.jpg")));
         }
 
 
@@ -602,6 +605,7 @@ namespace AlumnoEjemplos.NaveEspacial
                 {
                     vidaEnemigo -= 25f;
                     Disparos[i].incrementarTiempo(5f);
+                    impactSound.play();
                 }
             }
 
@@ -668,7 +672,13 @@ namespace AlumnoEjemplos.NaveEspacial
                     disparoBeam = crearBeamPara(spaceShip);
                     disparoBeam.renderModel.render();
                     beamSound.play();
-                
+
+
+                    if (Math.Sqrt(Math.Pow(disparoBeam.renderModel.Position.X - naveEnemiga.Position.X, 2.0) + Math.Pow(disparoBeam.renderModel.Position.Y - naveEnemiga.Position.Y, 2.0) + Math.Pow(disparoBeam.renderModel.Position.Z - naveEnemiga.Position.Z, 2.0)) <= 8*largoBala)
+                    {
+                        vidaEnemigo -= 50f;
+                        impactSound.play();
+                     }
 
                 //  Disparos.Add(disparoTemp);
                 //   timeSinceLastShot = 0f;
@@ -871,7 +881,7 @@ namespace AlumnoEjemplos.NaveEspacial
             disparoModel.Rotation = owner.Rotation;
             disparoModel.rotateZ(3.14f / 2);
             disparoModel.Rotation.Multiply(0f);
-            disparoModel.moveOrientedY(-5 * largoBala);
+            disparoModel.moveOrientedY(-4 * largoBala);
             return disparoBeam;
         }
 
