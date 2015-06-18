@@ -95,6 +95,7 @@ namespace AlumnoEjemplos.NaveEspacial
         float maxSpeed = 0.8f;
         float AngleZRotation;
         float anguloSubida;
+        int enemiesKilled = 0;  //contador en pantalla de enemigos asesinados
 
 
         List<Star> gameStars;
@@ -456,6 +457,7 @@ namespace AlumnoEjemplos.NaveEspacial
             {
                 if (currentSpeed > 0) { currentSpeed -= breaks * accel * elapsedTime; }
                 else { currentSpeed += 2 * breaks * accel * elapsedTime; } //esto hace que si no esta acelerando baje la velocidad a 0 (para reversa es mas rapido)
+                if (currentSpeed > -0.01f & currentSpeed < 0.01f) { currentSpeed = 0; }
             }
             if (!GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.D) && AngleZRotation > 0)
             {
@@ -620,7 +622,9 @@ namespace AlumnoEjemplos.NaveEspacial
 
 
             text1.render();
-
+            GuiController.Instance.Text3d.drawText("Speed: " + currentSpeed, screenSize.Width / 12, screenSize.Height - screenSize.Height / 18, Color.Blue);
+            GuiController.Instance.Text3d.drawText("Enemies Killed: " + enemiesKilled, screenSize.Width / 12, screenSize.Height - screenSize.Height / 12, Color.Red);
+            
             //Actualizar transformaciones y renderizar planetas
 
             //Sol
@@ -677,6 +681,8 @@ namespace AlumnoEjemplos.NaveEspacial
 
             if (vidaEnemigo > 0) { naveEnemiga.render(); 
                                  //naveEnemiga.BoundingBox.render();
+                                 } else {
+                                   enemiesKilled = 1;
                                  }
             if (vidaEnemigo < 1) {
                                  //naveEnemiga.dispose();
