@@ -402,8 +402,24 @@ namespace AlumnoEjemplos.NaveEspacial
 
             }
 
-            //Boton Izq, disparo
-            if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_LEFT) && timeSinceLastShot > 0.5f) //reviso tecla y el intervalo de disparo
+            //Boton Der, disparo
+            if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_LEFT) && timeSinceLastShot > 0.5f
+                && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space) &&
+                !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift) &&
+                !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl) &&
+                (anguloSubida < 0.05f) && (anguloSubida > -0.05f)) //reviso tecla y el intervalo de disparo
+            {
+                Bullet disparoTemp = crearBeamPara(spaceShip);
+                disparoTemp.renderModel.render();
+                shotSound.play();
+
+              //  Disparos.Add(disparoTemp);
+             //   timeSinceLastShot = 0f;
+            }
+
+
+            //Boton Der, disparo
+            if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_RIGHT) && timeSinceLastShot > 0.5f) //reviso tecla y el intervalo de disparo
             {
                 Bullet disparoTemp = crearBalaPara(spaceShip);
                 shotSound.play();
@@ -829,6 +845,20 @@ namespace AlumnoEjemplos.NaveEspacial
             disparoModel.Position = owner.Position;
             disparoModel.Rotation = owner.Rotation;
             disparoModel.Rotation.Multiply(0f);
+            disparo = new Bullet(disparoModel);
+            return disparo;
+        }
+
+        Bullet crearBeamPara(TgcMesh owner)
+        {
+            Bullet disparo;
+            TgcBox disparoModel;
+            disparoModel = TgcBox.fromSize(new Vector3(0.1f, 0.1f, 10 * largoBala), TgcTexture.createTexture(GuiController.Instance.D3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\laserbeamblue.jpg"));
+            disparoModel.Position = owner.Position;
+            disparoModel.Rotation = owner.Rotation;
+            disparoModel.rotateZ(3.14f / 2);
+            disparoModel.Rotation.Multiply(0f);
+            disparoModel.moveOrientedY(-5 * largoBala);
             disparo = new Bullet(disparoModel);
             return disparo;
         }
