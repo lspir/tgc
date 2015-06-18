@@ -20,7 +20,6 @@ namespace AlumnoEjemplos.NaveEspacial
 {
     public class NaveEspacial : TgcExample
     {
-
         readonly Vector3 SUN_SCALE = new Vector3(30, 30, 30);
         readonly Vector3 VENUS_SCALE = new Vector3(6, 6, 6);
         readonly Vector3 EARTH_SCALE = new Vector3(8, 8, 8);
@@ -115,7 +114,6 @@ namespace AlumnoEjemplos.NaveEspacial
         Vector3 lightOffset2;
         TgcBox unaCaja;
         TgcBox unaCaja2;
-
 
         public override string getCategory()
         {
@@ -256,7 +254,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
             //TEXTO de explicacion
             text1 = new TgcText2d();
-            text1.Text = "Aceleracion: W, Freno: S                       RotarHorizontal: A y D                         Subir: Shift, Bajar: Ctrl                         HiperVelocidad: Space                             Disparos: ClickIzq";
+            text1.Text = "Aceleracion: W, Freno: S                       RotarHorizontal: A y D                         Subir: Shift, Bajar: Ctrl                         HiperVelocidad: Space                             Disparos: Ambos click";
             text1.Align = TgcText2d.TextAlign.RIGHT;
             text1.Position = new Point(50, 50);
             text1.Size = new Size(300, 100);
@@ -281,6 +279,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
 
             ///////////////MODIFIERS//////////////////
+
             //lo que va incrementando la aceleracion
             GuiController.Instance.Modifiers.addFloat("accel", 0f, 2f, 0.3f);
 
@@ -354,6 +353,7 @@ namespace AlumnoEjemplos.NaveEspacial
         {
             //Device de DirectX para renderizar
             Device d3dDevice = GuiController.Instance.D3dDevice;
+
             GuiController.Instance.Text3d.drawText("FPS: " + HighResolutionTimer.Instance.FramesPerSecond, 0, 0, Color.Yellow);
 
             //Obtener valores de Modifiers
@@ -780,6 +780,7 @@ namespace AlumnoEjemplos.NaveEspacial
             {
                 m.Technique = "DefaultTechnique";
             }
+
         }
 
         // Método que se llama cuando termina la ejecución del ejemplo.
@@ -815,7 +816,6 @@ namespace AlumnoEjemplos.NaveEspacial
             beamSound.dispose();
             impactSound.dispose();
         }
-
 
         private void reducirVida(TgcMesh spaceShip)
         {
