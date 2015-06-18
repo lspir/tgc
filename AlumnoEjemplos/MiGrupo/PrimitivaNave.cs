@@ -337,7 +337,7 @@ namespace AlumnoEjemplos.NaveEspacial
             unaCaja = TgcBox.fromSize(new Vector3(1, 1, 1), Color.White);
             unaCaja2 = TgcBox.fromSize(new Vector3(1, 1, 1), Color.White);
 
-            disparoBeam = crearBeamPara(spaceShip);
+            disparoBeam = new Bullet(TgcBox.fromSize(new Vector3(0.1f, 0.1f, 10 * largoBala), TgcTexture.createTexture(GuiController.Instance.D3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\laserbeamblue.jpg")));
         }
 
 
@@ -665,12 +665,10 @@ namespace AlumnoEjemplos.NaveEspacial
                 !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl) &&
                 (anguloSubida < 0.05f) && (anguloSubida > -0.05f)) //reviso tecla y el intervalo de disparo
             {
-                if (!(currentSpeed > maxSpeed))
-                {
                     disparoBeam = crearBeamPara(spaceShip);
                     disparoBeam.renderModel.render();
                     beamSound.play();
-                }
+                
 
                 //  Disparos.Add(disparoTemp);
                 //   timeSinceLastShot = 0f;
@@ -857,9 +855,10 @@ namespace AlumnoEjemplos.NaveEspacial
         {
             Bullet disparo;
             TgcBox disparoModel;
-            disparoModel = TgcBox.fromSize(new Vector3(0.5f, 0.5f, largoBala), Color.Pink);
+            disparoModel = TgcBox.fromSize(new Vector3(0.3f, 0.3f, largoBala), TgcTexture.createTexture(GuiController.Instance.D3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\gbullet.jpg"));
             disparoModel.Position = owner.Position;
             disparoModel.Rotation = owner.Rotation;
+            disparoModel.rotateZ(3.14f / 2);
             disparoModel.Rotation.Multiply(0f);
             disparo = new Bullet(disparoModel);
             return disparo;
@@ -867,19 +866,16 @@ namespace AlumnoEjemplos.NaveEspacial
 
         Bullet crearBeamPara(TgcMesh owner)
         {
-            Bullet disparo;
-            TgcBox disparoModel;
-            disparoModel = TgcBox.fromSize(new Vector3(0.1f, 0.1f, 10 * largoBala), TgcTexture.createTexture(GuiController.Instance.D3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\laserbeamblue.jpg"));
+            TgcBox disparoModel = disparoBeam.renderModel;    
             disparoModel.Position = owner.Position;
             disparoModel.Rotation = owner.Rotation;
             disparoModel.rotateZ(3.14f / 2);
             disparoModel.Rotation.Multiply(0f);
             disparoModel.moveOrientedY(-5 * largoBala);
-            disparo = new Bullet(disparoModel);
-            return disparo;
+            return disparoBeam;
         }
 
-                   
+                         
              Asteroids crearAsteroide()
         {
             Asteroids asteroide;
