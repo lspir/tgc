@@ -97,7 +97,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
 
         List<Star> gameStars;
-        const int starCount = 50; //La cantidad maxima de estrellas simultaneas.
+        const int starCount = 5000; //La cantidad maxima de estrellas simultaneas.
         
         List<Asteroids> gameAsteroids;
         const int asteroidCount = 5; //La cantidad maxima de asteroides simultaneos.
