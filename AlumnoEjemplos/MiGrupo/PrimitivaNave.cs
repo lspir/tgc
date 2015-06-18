@@ -96,6 +96,7 @@ namespace AlumnoEjemplos.NaveEspacial
         float AngleZRotation;
         float anguloSubida;
         int enemiesKilled = 0;  //contador en pantalla de enemigos asesinados
+        Bullet disparoBeam;
 
 
         List<Star> gameStars;
@@ -335,6 +336,8 @@ namespace AlumnoEjemplos.NaveEspacial
             lightOffset2 = new Vector3(1f, -1f, 0);
             unaCaja = TgcBox.fromSize(new Vector3(1, 1, 1), Color.White);
             unaCaja2 = TgcBox.fromSize(new Vector3(1, 1, 1), Color.White);
+
+            disparoBeam = crearBeamPara(spaceShip);
         }
 
 
@@ -407,23 +410,7 @@ namespace AlumnoEjemplos.NaveEspacial
             else if (currentSpeed > (maxSpeed * hyperSpeed) && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
             { currentSpeed = maxSpeed * hyperSpeed; }
 
-            //Boton IZQ, laser
-            if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_LEFT) && timeSinceLastShot > 0.5f
-                && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space) &&
-                !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift) &&
-                !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl) &&
-                (anguloSubida < 0.05f) && (anguloSubida > -0.05f)) //reviso tecla y el intervalo de disparo
-            {
-               if (!(currentSpeed>maxSpeed))
-                {
-                Bullet disparoTemp = crearBeamPara(spaceShip);
-                disparoTemp.renderModel.render();
-                beamSound.play();
-                }
-              //  Disparos.Add(disparoTemp);
-             //   timeSinceLastShot = 0f;
-            }
-
+            
 
             //Boton Der, disparo
             if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_RIGHT) && timeSinceLastShot > 0.5f) //reviso tecla y el intervalo de disparo
@@ -670,7 +657,24 @@ namespace AlumnoEjemplos.NaveEspacial
             }
 
             spaceSphere.Position = spaceShip.Position;
+            
+            //Boton IZQ, laser   Va al  final para trabajar con la posicion post checkeo de colisiones
+            if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_LEFT) && timeSinceLastShot > 0.5f
+                && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space) &&
+                !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift) &&
+                !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl) &&
+                (anguloSubida < 0.05f) && (anguloSubida > -0.05f)) //reviso tecla y el intervalo de disparo
+            {
+                if (!(currentSpeed > maxSpeed))
+                {
+                    disparoBeam = crearBeamPara(spaceShip);
+                    disparoBeam.renderModel.render();
+                    beamSound.play();
+                }
 
+                //  Disparos.Add(disparoTemp);
+                //   timeSinceLastShot = 0f;
+            }
 
             //Limpiamos todas las transformaciones con la Matrix identidad
             d3dDevice.Transform.World = Matrix.Identity;
