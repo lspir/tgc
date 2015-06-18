@@ -129,7 +129,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
         public override string getDescription()
         {
-            return "NaveEspacial - Primitiva de lo que sera el TP";
+            return "NaveEspacial - Vortex";
         }
 
 
@@ -311,6 +311,9 @@ namespace AlumnoEjemplos.NaveEspacial
             //Modifier para MotionBlur
             GuiController.Instance.Modifiers.addBoolean("MotionBlur", "MotionBlur:", false);
 
+            //Modifier para SonidoAmbiente
+            GuiController.Instance.Modifiers.addBoolean("AmbientSound", "AmbientSound:", true);
+
 
             //AGREGO LA CAMARA QUE LA SIGUE
             //Habilito la camara en 1era Persona
@@ -364,10 +367,12 @@ namespace AlumnoEjemplos.NaveEspacial
             float distEnemigo = (float)GuiController.Instance.Modifiers["distEnemigo"];
             bool showBB = (bool)GuiController.Instance.Modifiers["BoundingBox"];
             bool shaderMB = (bool)GuiController.Instance.Modifiers["MotionBlur"];
+            bool ambSound = (bool)GuiController.Instance.Modifiers["AmbientSound"];
 
             spaceSphere.render(); //la rendereo primero porque es el fondo
 
-            ambientSound.play(true);   //inicio la musica de fondo, en modo loop
+            if (ambSound) { ambientSound.play(true); }   //inicio la musica de fondo, en modo loop
+            else { ambientSound.stop(); }
 
             //cada frame voy actualizando el tiempo entre disparos
             timeSinceLastShot += elapsedTime;
@@ -807,6 +812,8 @@ namespace AlumnoEjemplos.NaveEspacial
 
             ambientSound.dispose();
             shotSound.dispose();
+            beamSound.dispose();
+            impactSound.dispose();
         }
 
 
