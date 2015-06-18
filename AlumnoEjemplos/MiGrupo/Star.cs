@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using TgcViewer.Example;
@@ -17,46 +17,32 @@ namespace AlumnoEjemplos.MiGrupo
     class Star
     {
         Vector2 spriteSize;
-        //El indice el sprite actual.
-        int currentStar;
         float size;
         float angle;
         public Vector2 Position;
-        List<TgcSprite> stars;
+        TgcSprite newStar;
         Size screenSize;
+        float offsetFromCenter = 20f;
 
-        float speed;
+        float speed = 300;
 
 
         public void Load()
         {
             screenSize = GuiController.Instance.Panel3d.Size;
 
-            //Creo la lista de Estrellas en HyperSpeed.
-            stars = new List<TgcSprite>();
-
             Random rnd = new Random();
             spriteSize = new Vector2(3, 3);
             size = 3 * (float)rnd.NextDouble();
             angle = 0.0f;
-            speed = 300 + 100 * (float)rnd.NextDouble();
+            speed += 100 * (float)rnd.NextDouble();
 
-            TgcSprite newStar;
-            //Creo 64 sprites asignando distintos clipping rects a cada uno.
-            for (int i = 0; i < 8; i++)
-            {
-                for (int j = 0; j < 8; j++)
-                {
                     newStar = new TgcSprite();
-                    newStar.SrcRect = new Rectangle(j * (int)spriteSize.X, i * (int)spriteSize.Y, (int)spriteSize.X, (int)spriteSize.Y);
+                    newStar.SrcRect = new Rectangle(1 * (int)spriteSize.X, 1 * (int)spriteSize.Y, (int)spriteSize.X, (int)spriteSize.Y);
                     newStar.Color = Color.WhiteSmoke;
                     newStar.Texture = TgcTexture.createTexture(GuiController.Instance.AlumnoEjemplosMediaDir + "\\Texturas\\Star.png");
                     newStar.Scaling = new Vector2(size, size);
-                    stars.Add(newStar);
-                }
-            }
-        //primer estrella
-        currentStar = 0;
+
         GenerateRandomPosition();
         }
 
@@ -74,23 +60,28 @@ namespace AlumnoEjemplos.MiGrupo
             Position.X += speed * elapsedTime * (float)Math.Cos(angle);
             Position.Y += speed * elapsedTime * (float)Math.Sin(angle);
 
-            currentStar++;
-            if (currentStar > 63) currentStar = 0;
 
-            stars[currentStar].Position = Position;
+            newStar.Position = Position;
         }
 
 
         public void GenerateRandomPosition()
         {
-            //Los creo en el centro de la pantalla
+            //Los creo en el centro de la pantalla (alrededor de un offset dado)
             float starPosEndX;
             float starPosEndY;
 
             Random rnd = new Random();
+            Random rndMovementX = new Random();
+            Random rndDirectionX = new Random();
+            Random rndMovementY = new Random();
+            Random rndDirectionY = new Random();
 
-            Position.X = (screenSize.Width / 2);
-            Position.Y = (screenSize.Height / 2);
+
+            if ((float)rndDirectionX.NextDouble() < 0.5f)   { Position.X = (screenSize.Width / 2) - offsetFromCenter * ((float)rndMovementX.NextDouble() + 0.1f); }
+            else                                            { Position.X = (screenSize.Width / 2) + offsetFromCenter * ((float)rndMovementX.NextDouble() + 0.1f); }
+            if ((float)rndDirectionY.NextDouble() < 0.5f)   { Position.Y = (screenSize.Height / 2) - offsetFromCenter * ((float)rndMovementY.NextDouble() + 0.1f); }
+            else                                            { Position.Y = (screenSize.Height / 2) + offsetFromCenter * ((float)rndMovementY.NextDouble() + 0.1f); }
 
             int sideStar = (int)(rnd.NextDouble() * 2);
             if (sideStar == 0)
@@ -110,30 +101,13 @@ namespace AlumnoEjemplos.MiGrupo
 
         public void Render()
         {
-            //stars[currentStar].render();
-            //Render Stars
-            currentStar = 0;
-            foreach (TgcSprite star in stars)
-            {
-                currentStar++;
-                if (currentStar > 63) currentStar = 0;
-
-                stars[currentStar].render();
-            }
+                newStar.render();
         }
 
 
         public void Close()
         {
-            //Dispose Stars
-            currentStar = 0;
-            foreach (TgcSprite star in stars)
-            {
-                currentStar++;
-                if (currentStar > 63) currentStar = 0;
-
-                stars[currentStar].dispose();
-            }
+                newStar.dispose();
         }
     }
 }
