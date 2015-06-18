@@ -366,27 +366,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
             ///////////////INPUT TECLADO//////////////////
 
-            //Boton Izq, disparo
-            if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_LEFT) && timeSinceLastShot > 0.5f) //reviso tecla y el intervalo de disparo
-            {
-                Bullet disparoTemp = crearBalaPara(spaceShip);
-                shotSound.play();
-                Disparos.Add(disparoTemp);
-                timeSinceLastShot = 0f;
-            }
-
-            for (int i = 0; i < Disparos.Count; i += 1)
-            {
-                Disparos[i].renderModel.moveOrientedY(-1f);
-                Disparos[i].renderModel.render();
-                Disparos[i].incrementarTiempo(elapsedTime);
-
-                if (Disparos[i].getDone()) //si la bala hace X segundos que esta en el juego, ya viajo lejos y no me interesa, la destruyo
-                {
-                    Disparos[i].renderModel.dispose();
-                    Disparos.Remove(Disparos[i]);
-                }
-            }
+          
 
             //Tecla W apretada (si además tiene Space, va a hiperVelocidad)
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W))
@@ -420,6 +400,33 @@ namespace AlumnoEjemplos.NaveEspacial
                 else if (currentSpeed > (maxSpeed * hyperSpeed) && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
                 { currentSpeed = maxSpeed * hyperSpeed; }
 
+            }
+
+            //Boton Izq, disparo
+            if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_LEFT) && timeSinceLastShot > 0.5f) //reviso tecla y el intervalo de disparo
+            {
+                Bullet disparoTemp = crearBalaPara(spaceShip);
+                shotSound.play();
+                Disparos.Add(disparoTemp);
+                timeSinceLastShot = 0f;
+            }
+
+            for (int i = 0; i < Disparos.Count; i += 1)
+            {
+                float velocidad = -1f;
+                if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
+                {
+                    velocidad = -1f - hyperSpeed;
+                }
+                Disparos[i].renderModel.moveOrientedY(velocidad);
+                Disparos[i].renderModel.render();
+                Disparos[i].incrementarTiempo(elapsedTime);
+
+                if (Disparos[i].getDone()) //si la bala hace X segundos que esta en el juego, ya viajo lejos y no me interesa, la destruyo
+                {
+                    Disparos[i].renderModel.dispose();
+                    Disparos.Remove(Disparos[i]);
+                }
             }
 
             //DESACELERACION y vuelta a la posicion original (horizonte)//
@@ -818,7 +825,7 @@ namespace AlumnoEjemplos.NaveEspacial
         {
             Bullet disparo;
             TgcBox disparoModel;
-            disparoModel = TgcBox.fromSize(new Vector3(1, 1, largoBala), Color.Pink);
+            disparoModel = TgcBox.fromSize(new Vector3(0.5f, 0.5f, largoBala), Color.Pink);
             disparoModel.Position = owner.Position;
             disparoModel.Rotation = owner.Rotation;
             disparoModel.Rotation.Multiply(0f);
