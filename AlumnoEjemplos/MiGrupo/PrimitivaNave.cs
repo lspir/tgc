@@ -82,6 +82,7 @@ namespace AlumnoEjemplos.NaveEspacial
         TgcText2d text1;    //textoExplicacion
         TgcStaticSound ambientSound;   //musica de fondo
         TgcStaticSound shotSound;   //ruido de disparo
+        TgcStaticSound beamSound;
         TgcSprite spriteLife;   //barra de vida
         float vidaTotal = 100f;
         float vidaNave;
@@ -144,7 +145,8 @@ namespace AlumnoEjemplos.NaveEspacial
             ambientSound.loadSound(GuiController.Instance.AlumnoEjemplosMediaDir + "Sounds\\LightCycle_ApproachingNirvana.wav");
             shotSound = new TgcStaticSound();
             shotSound.loadSound(GuiController.Instance.AlumnoEjemplosMediaDir + "Sounds\\Disparo.wav");
-
+            beamSound = new TgcStaticSound();
+            beamSound.loadSound(GuiController.Instance.AlumnoEjemplosMediaDir + "Sounds\\Beam.wav");
 
             //inicio la lista
             Disparos = new List<Bullet>();
@@ -394,25 +396,29 @@ namespace AlumnoEjemplos.NaveEspacial
                     AngleZRotation += (rotationZ * angRetorno * elapsedTime);
                 }
 
-                //limito la velocidad maxima
-                if (currentSpeed > maxSpeed && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
-                { currentSpeed = maxSpeed; }
-                else if (currentSpeed > (maxSpeed * hyperSpeed) && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
-                { currentSpeed = maxSpeed * hyperSpeed; }
+             
 
             }
 
-            //Boton Der, disparo
+            //limito la velocidad maxima
+            if (currentSpeed > maxSpeed && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
+            { currentSpeed -= 0.01F; }
+            else if (currentSpeed > (maxSpeed * hyperSpeed) && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space))
+            { currentSpeed = maxSpeed * hyperSpeed; }
+
+            //Boton IZQ, laser
             if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_LEFT) && timeSinceLastShot > 0.5f
                 && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space) &&
                 !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftShift) &&
                 !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.LeftControl) &&
                 (anguloSubida < 0.05f) && (anguloSubida > -0.05f)) //reviso tecla y el intervalo de disparo
             {
+               if (!(currentSpeed>maxSpeed))
+                {
                 Bullet disparoTemp = crearBeamPara(spaceShip);
                 disparoTemp.renderModel.render();
-                shotSound.play();
-
+                beamSound.play();
+                }
               //  Disparos.Add(disparoTemp);
              //   timeSinceLastShot = 0f;
             }
@@ -862,9 +868,9 @@ namespace AlumnoEjemplos.NaveEspacial
             disparo = new Bullet(disparoModel);
             return disparo;
         }
-        
-        
-        Asteroids crearAsteroide()
+
+                   
+             Asteroids crearAsteroide()
         {
             Asteroids asteroide;
             TgcSphere asteroideModel;
