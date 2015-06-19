@@ -74,7 +74,14 @@ namespace AlumnoEjemplos.NaveEspacial
 
         TgcMesh spaceShip; //nave
         TgcObb obbSpaceShip; //para la colision de la nave
-        List<TgcBoundingBox> Colisionables = new List<TgcBoundingBox>();
+        List<TgcBoundingSphere> sphereColisionables = new List<TgcBoundingSphere>();
+        TgcBoundingSphere sunSphere;
+        TgcBoundingSphere venusSphere;
+        TgcBoundingSphere earthSphere;
+        TgcBoundingSphere moonSphere;
+        TgcBoundingSphere jupiterSphere;
+        TgcBoundingSphere neptuneSphere;
+
 
         TgcMesh naveEnemiga; //nave enemiga
 
@@ -101,7 +108,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
 
         List<Star> gameStars;
-        const int starCount = 5000; //La cantidad maxima de estrellas simultaneas.
+        const int starCount = 3000; //La cantidad maxima de estrellas simultaneas.
         
         List<Asteroids> gameAsteroids;
         const int asteroidCount = 5; //La cantidad maxima de asteroides simultaneos.
@@ -189,10 +196,36 @@ namespace AlumnoEjemplos.NaveEspacial
             neptune.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\NeptuneTexture.png") });
             blurredMeshes.Add(neptune);
 
+
             spaceSphere = loader.loadSceneFromFile(sphere).Meshes[0];
             spaceSphere.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\spaceBackTexture.jpg") });
             spaceSphere.Scale = SPACE_SCALE;
             //blurredMeshes.Add(spaceSphere);
+
+
+            transformarPlanetasYBoundingBoxes();
+            //Y para los boundingSpheres
+            sun.AutoUpdateBoundingBox = false;
+            sunSphere = new TgcBoundingSphere(sun.BoundingBox.calculateBoxCenter(), SUN_SCALE.X * 24);
+            venus.AutoUpdateBoundingBox = false;
+            venusSphere = new TgcBoundingSphere(venus.BoundingBox.calculateBoxCenter(), JUPITER_SCALE.X * 14);
+            earth.AutoUpdateBoundingBox = false;
+            earthSphere = new TgcBoundingSphere(earth.BoundingBox.calculateBoxCenter(), JUPITER_SCALE.X * 18);
+            moon.AutoUpdateBoundingBox = false;
+            moonSphere = new TgcBoundingSphere(moon.BoundingBox.calculateBoxCenter(), JUPITER_SCALE.X * 8);
+            jupiter.AutoUpdateBoundingBox = false;
+            jupiterSphere = new TgcBoundingSphere(jupiter.BoundingBox.calculateBoxCenter(), JUPITER_SCALE.X * 24);
+            neptune.AutoUpdateBoundingBox = false;
+            neptuneSphere = new TgcBoundingSphere(neptune.BoundingBox.calculateBoxCenter(), NEPTUNE_SCALE.X * 23);
+            //Colisiones
+            sphereColisionables.Clear();
+            sphereColisionables.Add(sunSphere);
+            sphereColisionables.Add(venusSphere);
+            sphereColisionables.Add(earthSphere);
+            sphereColisionables.Add(moonSphere);
+            sphereColisionables.Add(jupiterSphere);
+            sphereColisionables.Add(neptuneSphere);
+
 
 
             //Deshabilitamos el manejo automático de Transformaciones de TgcMesh, para poder manipularlas en forma customizada
@@ -308,6 +341,9 @@ namespace AlumnoEjemplos.NaveEspacial
             //Modifier para BoundingBox
             GuiController.Instance.Modifiers.addBoolean("BoundingBox", "BoundingBox:", false);
 
+            //Modifier para Luz
+            GuiController.Instance.Modifiers.addBoolean("LightEffects", "LightEffects:", false);
+
             //Modifier para MotionBlur
             GuiController.Instance.Modifiers.addBoolean("MotionBlur", "MotionBlur:", false);
 
@@ -321,15 +357,6 @@ namespace AlumnoEjemplos.NaveEspacial
             //Configurar a quien sigue y a que distancia Altura y Lejania
             GuiController.Instance.ThirdPersonCamera.setCamera(spaceShip.Position, 3, 10);
 
-
-            //Para colisiones
-            Colisionables.Clear();
-            Colisionables.Add(sun.BoundingBox);
-            Colisionables.Add(venus.BoundingBox);
-            Colisionables.Add(earth.BoundingBox);
-            Colisionables.Add(moon.BoundingBox);
-            Colisionables.Add(jupiter.BoundingBox);
-            Colisionables.Add(neptune.BoundingBox);
             
 
             //activo el Blur
@@ -366,6 +393,7 @@ namespace AlumnoEjemplos.NaveEspacial
             float hyperSpeed = (float)GuiController.Instance.Modifiers["hyperSpeed"];
             float distEnemigo = (float)GuiController.Instance.Modifiers["distEnemigo"];
             bool showBB = (bool)GuiController.Instance.Modifiers["BoundingBox"];
+            bool lightEffects = (bool)GuiController.Instance.Modifiers["LightEffects"];
             bool shaderMB = (bool)GuiController.Instance.Modifiers["MotionBlur"];
             bool ambSound = (bool)GuiController.Instance.Modifiers["AmbientSound"];
 
@@ -379,9 +407,6 @@ namespace AlumnoEjemplos.NaveEspacial
             timeSinceLastEnemyShot += elapsedTime;
 
             ///////////////INPUT TECLADO//////////////////
-
-          
-
             //Tecla W apretada (si además tiene Space, va a hiperVelocidad)
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W))
             {
@@ -623,29 +648,24 @@ namespace AlumnoEjemplos.NaveEspacial
             
             //Actualizar transformaciones y renderizar planetas
 
+            transformarPlanetasYBoundingBoxes();
             //Sol
-            sun.Transform = getPlanetTransform(SUN_SCALE, axisRotation, 0, 0, Matrix.Identity);
-            sun.BoundingBox.transform(sun.Transform);
+            sunSphere.setCenter(sun.BoundingBox.calculateBoxCenter());
             sun.render();
             //Venus
-            venus.Transform = getPlanetTransform(VENUS_SCALE, axisRotation, VENUS_ORBIT_OFFSET, venusOrbitRotation, Matrix.Identity);
-            venus.BoundingBox.transform(venus.Transform);
+            venusSphere.setCenter(venus.BoundingBox.calculateBoxCenter());
             venus.render();
             //Tierra
-            earth.Transform = getPlanetTransform(EARTH_SCALE, earthAxisRotation, EARTH_ORBIT_OFFSET, earthOrbitRotation, Matrix.Identity);
-            earth.BoundingBox.transform(earth.Transform);
+            earthSphere.setCenter(earth.BoundingBox.calculateBoxCenter());
             earth.render();
             //Luna
-            moon.Transform = getPlanetTransform(MOON_SCALE, axisRotation, MOON_ORBIT_OFFSET, moonOrbitRotation, earth.Transform);
-            moon.BoundingBox.transform(moon.Transform);
+            moonSphere.setCenter(moon.BoundingBox.calculateBoxCenter());
             moon.render();
             //Jupiter
-            jupiter.Transform = getPlanetTransform(JUPITER_SCALE, axisRotation, JUPITER_ORBIT_OFFSET, jupiterOrbitRotation, Matrix.Identity);
-            jupiter.BoundingBox.transform(jupiter.Transform);
+            jupiterSphere.setCenter(jupiter.BoundingBox.calculateBoxCenter());
             jupiter.render();
             //Neptune
-            neptune.Transform = getPlanetTransform(NEPTUNE_SCALE, axisRotation, NEPTUNE_ORBIT_OFFSET, neptuneOrbitRotation, Matrix.Identity);
-            neptune.BoundingBox.transform(neptune.Transform);
+            neptuneSphere.setCenter(neptune.BoundingBox.calculateBoxCenter());
             neptune.render();
 
             axisRotation += AXIS_ROTATION_SPEED * elapsedTime;
@@ -657,9 +677,9 @@ namespace AlumnoEjemplos.NaveEspacial
             neptuneOrbitRotation += NEPTUNE_ORBIT_SPEED * elapsedTime;
 
             //checkeo colisiones
-            foreach (TgcBoundingBox col in Colisionables)
+            foreach (TgcBoundingSphere col in sphereColisionables)
             {
-                if (TgcCollisionUtils.testObbAABB(obbSpaceShip, col))
+                if (TgcCollisionUtils.testSphereOBB(col, obbSpaceShip))
                 {
                     spaceShip.Position = lastPos; obbSpaceShip.move(spaceShip.Position - obbSpaceShip.Position);
                 }
@@ -710,17 +730,17 @@ namespace AlumnoEjemplos.NaveEspacial
             //BoundingBox
             if (showBB)
             {
-                sun.BoundingBox.render();
-                venus.BoundingBox.render();
-                moon.BoundingBox.render();
-                earth.BoundingBox.render();
-                jupiter.BoundingBox.render();
-                neptune.BoundingBox.render();
+                sunSphere.render();
+                venusSphere.render();
+                moonSphere.render();
+                earthSphere.render();
+                jupiterSphere.render();
+                neptuneSphere.render();
                 naveEnemiga.BoundingBox.render();
             }
 
-            //EfectoShader
-            if (shaderMB)
+            //Lo que estaba como efecto Motion Blur pero fue usado para luz
+            if (lightEffects)
             {
                 if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W)
                     && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space)
@@ -738,6 +758,18 @@ namespace AlumnoEjemplos.NaveEspacial
                     unaCaja2.render();
 
                     effectLight.Render(elapsedTime, spaceShip.Position + lightOffset1, spaceShip.Position + lightOffset2);
+                }
+            }
+
+            //EfectoShader
+            if (shaderMB)
+            {
+                if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W)
+                    && GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.Space)
+                    && !GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.S))
+                {
+                    effectBlur.Render(elapsedTime);
+                    spaceShip.render();
                 }
             }
 
@@ -799,6 +831,14 @@ namespace AlumnoEjemplos.NaveEspacial
             spriteNitro.dispose();
             spaceSphere.dispose();
 
+            sunSphere.dispose();
+            venusSphere.dispose();
+            moonSphere.dispose();
+            earthSphere.dispose();
+            jupiterSphere.dispose();
+            neptuneSphere.dispose();
+            obbSpaceShip.dispose();
+
             foreach (Star actualStar in gameStars)
             {
                 actualStar.Close();
@@ -815,6 +855,8 @@ namespace AlumnoEjemplos.NaveEspacial
             beamSound.dispose();
             impactSound.dispose();
         }
+
+
 
 
         private void reducirVida(TgcMesh spaceShip)
@@ -840,6 +882,28 @@ namespace AlumnoEjemplos.NaveEspacial
             Matrix planetOrbit = Matrix.RotationY(orbitRot);
 
             return scale * yRot * planetOffset * planetOrbit * satelite;
+        }
+
+        void transformarPlanetasYBoundingBoxes()
+        {
+            //Sun
+            sun.Transform = getPlanetTransform(SUN_SCALE, axisRotation, 0, 0, Matrix.Identity);
+            sun.BoundingBox.transform(sun.Transform);
+            //Venus
+            venus.Transform = getPlanetTransform(VENUS_SCALE, axisRotation, VENUS_ORBIT_OFFSET, venusOrbitRotation, Matrix.Identity);
+            venus.BoundingBox.transform(venus.Transform);
+            //Earth
+            earth.Transform = getPlanetTransform(EARTH_SCALE, earthAxisRotation, EARTH_ORBIT_OFFSET, earthOrbitRotation, Matrix.Identity);
+            earth.BoundingBox.transform(earth.Transform);
+            //Moon
+            moon.Transform = getPlanetTransform(MOON_SCALE, axisRotation, MOON_ORBIT_OFFSET, moonOrbitRotation, earth.Transform);
+            moon.BoundingBox.transform(moon.Transform);
+            //Jupiter
+            jupiter.Transform = getPlanetTransform(JUPITER_SCALE, axisRotation, JUPITER_ORBIT_OFFSET, jupiterOrbitRotation, Matrix.Identity);
+            jupiter.BoundingBox.transform(jupiter.Transform);
+            //Neptune
+            neptune.Transform = getPlanetTransform(NEPTUNE_SCALE, axisRotation, NEPTUNE_ORBIT_OFFSET, neptuneOrbitRotation, Matrix.Identity);
+            neptune.BoundingBox.transform(neptune.Transform);
         }
 
 

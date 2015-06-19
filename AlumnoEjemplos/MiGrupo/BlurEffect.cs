@@ -179,7 +179,6 @@ namespace AlumnoEjemplos.MiGrupo
 
         public void Close()
         {
-            effect.Dispose();
             g_pRenderTarget.Dispose();
             g_pDepthStencil.Dispose();
             g_pVBV3D.Dispose();
