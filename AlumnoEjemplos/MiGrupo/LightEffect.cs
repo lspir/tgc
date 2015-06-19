@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using TgcViewer.Example;
 using TgcViewer;
@@ -73,10 +74,14 @@ namespace AlumnoEjemplos.MiGrupo
             lightsPos[0] = luz1;
             lightsPos[1] = luz2;
 
+            device.BeginScene();
+
             //Cargar variables shader de la luz
             //mesh.Effect.SetValue("lightColor", ColorValue.FromColor(lightColor));
             if (usandoPhong)
             {
+                mesh.Effect = effect;
+                mesh.Technique = "DefaultTechnique";
 
                 mesh.Effect.SetValue("fvLightPosition1", TgcParserUtils.vector3ToFloat3Array(lightsPos[0]));
                 mesh.Effect.SetValue("fvLightPosition2", TgcParserUtils.vector3ToFloat3Array(lightsPos[1]));
@@ -95,6 +100,9 @@ namespace AlumnoEjemplos.MiGrupo
             }
 
             mesh.render();
+
+            device.EndScene();
+
         }
 
         public void Close()

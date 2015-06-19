@@ -20,7 +20,6 @@ namespace AlumnoEjemplos.NaveEspacial
 {
     public class NaveEspacial : TgcExample
     {
-
         readonly Vector3 SUN_SCALE = new Vector3(30, 30, 30);
         readonly Vector3 VENUS_SCALE = new Vector3(6, 6, 6);
         readonly Vector3 EARTH_SCALE = new Vector3(8, 8, 8);
@@ -87,6 +86,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
 
         TgcText2d text1;    //textoExplicacion
+        TgcText2d textoGameOver;
         TgcStaticSound ambientSound;   //musica de fondo
         TgcStaticSound shotSound;   //ruido de disparo
         TgcStaticSound beamSound;
@@ -105,6 +105,7 @@ namespace AlumnoEjemplos.NaveEspacial
         float anguloSubida;
         int enemiesKilled = 0;  //contador en pantalla de enemigos asesinados
         Bullet disparoBeam;
+        bool gameOver = false;
 
 
         List<Star> gameStars;
@@ -122,7 +123,6 @@ namespace AlumnoEjemplos.NaveEspacial
         Vector3 lightOffset2;
         TgcBox unaCaja;
         TgcBox unaCaja2;
-
 
         public override string getCategory()
         {
@@ -289,12 +289,19 @@ namespace AlumnoEjemplos.NaveEspacial
 
             //TEXTO de explicacion
             text1 = new TgcText2d();
-            text1.Text = "Aceleracion: W, Freno: S                       RotarHorizontal: A y D                         Subir: Shift, Bajar: Ctrl                         HiperVelocidad: Space                             Disparos: ClickIzq";
+            text1.Text = "Aceleracion: W, Freno: S                       RotarHorizontal: A y D                         Subir: Shift, Bajar: Ctrl                         HiperVelocidad: Space                             Disparos: ClickIzq y ClickDer";
             text1.Align = TgcText2d.TextAlign.RIGHT;
             text1.Position = new Point(50, 50);
             text1.Size = new Size(300, 100);
             text1.Color = Color.Gold;
 
+            textoGameOver = new TgcText2d();
+            textoGameOver.Color = Color.White;
+            textoGameOver.Align = TgcText2d.TextAlign.CENTER;
+            textoGameOver.Position = new Point(70, 150);
+            textoGameOver.Size = new Size(650, 300);
+            textoGameOver.changeFont(new System.Drawing.Font("Arial", 32f, FontStyle.Bold));
+            textoGameOver.Text = "GAME OVER!!";
 
 
             //AGREGO UNA NAVE
@@ -314,6 +321,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
 
             ///////////////MODIFIERS//////////////////
+
             //lo que va incrementando la aceleracion
             GuiController.Instance.Modifiers.addFloat("accel", 0f, 2f, 0.3f);
 
@@ -356,6 +364,8 @@ namespace AlumnoEjemplos.NaveEspacial
             GuiController.Instance.ThirdPersonCamera.Enable = true;
             //Configurar a quien sigue y a que distancia Altura y Lejania
             GuiController.Instance.ThirdPersonCamera.setCamera(spaceShip.Position, 3, 10);
+            
+            
 
             
 
@@ -381,6 +391,7 @@ namespace AlumnoEjemplos.NaveEspacial
         {
             //Device de DirectX para renderizar
             Device d3dDevice = GuiController.Instance.D3dDevice;
+
             GuiController.Instance.Text3d.drawText("FPS: " + HighResolutionTimer.Instance.FramesPerSecond, 0, 0, Color.Yellow);
 
             //Obtener valores de Modifiers
@@ -405,8 +416,16 @@ namespace AlumnoEjemplos.NaveEspacial
             //cada frame voy actualizando el tiempo entre disparos
             timeSinceLastShot += elapsedTime;
             timeSinceLastEnemyShot += elapsedTime;
+            //muevo la nave en base a la aceleracion y rotacion que se le da, previamente guardando la pos anterior
+            Vector3 lastPos = spaceShip.Position;
 
             ///////////////INPUT TECLADO//////////////////
+            if (gameOver)
+            {
+                textoGameOver.render();
+            }
+            if (!gameOver)
+            {
             //Tecla W apretada (si además tiene Space, va a hiperVelocidad)
             if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.W))
             {
@@ -564,8 +583,7 @@ namespace AlumnoEjemplos.NaveEspacial
             }
 
 
-            //muevo la nave en base a la aceleracion y rotacion que se le da, previamente guardando la pos anterior
-            Vector3 lastPos = spaceShip.Position;
+            
 
             spaceShip.moveOrientedY(-currentSpeed);
             spaceShip.rotateY(AngleZRotation * elapsedTime);
@@ -638,7 +656,7 @@ namespace AlumnoEjemplos.NaveEspacial
                     impactSound.play();
                 }
             }
-
+            }
 
 
 
@@ -675,7 +693,7 @@ namespace AlumnoEjemplos.NaveEspacial
             moonOrbitRotation += MOON_ORBIT_SPEED * elapsedTime;
             jupiterOrbitRotation += JUPITER_ORBIT_SPEED * elapsedTime;
             neptuneOrbitRotation += NEPTUNE_ORBIT_SPEED * elapsedTime;
-
+            if (!gameOver){
             //checkeo colisiones
             foreach (TgcBoundingSphere col in sphereColisionables)
             {
@@ -708,7 +726,8 @@ namespace AlumnoEjemplos.NaveEspacial
                 //  Disparos.Add(disparoTemp);
                 //   timeSinceLastShot = 0f;
             }
-
+            }
+        
             //Limpiamos todas las transformaciones con la Matrix identidad
             d3dDevice.Transform.World = Matrix.Identity;
 
@@ -812,6 +831,7 @@ namespace AlumnoEjemplos.NaveEspacial
             {
                 m.Technique = "DefaultTechnique";
             }
+
         }
 
         // Método que se llama cuando termina la ejecución del ejemplo.
@@ -856,13 +876,11 @@ namespace AlumnoEjemplos.NaveEspacial
             impactSound.dispose();
         }
 
-
-
-
         private void reducirVida(TgcMesh spaceShip)
         {
             vidaNave -= 10;
             spriteLife.Scaling = new Vector2(spriteLife.Scaling.X, spriteLife.Scaling.Y * (vidaNave / vidaTotal));
+            if (vidaNave == 0f) { gameOver = true; }
 
         }
 
