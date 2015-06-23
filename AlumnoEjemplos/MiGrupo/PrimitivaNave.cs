@@ -87,10 +87,12 @@ namespace AlumnoEjemplos.NaveEspacial
 
         TgcText2d text1;    //textoExplicacion
         TgcText2d textoGameOver;
+        TgcText2d textoRestart;
         TgcStaticSound ambientSound;   //musica de fondo
         TgcStaticSound shotSound;   //ruido de disparo
         TgcStaticSound beamSound;
         TgcStaticSound impactSound;
+        TgcStaticSound gameOverSound;
         TgcSprite spriteLife;   //barra de vida
         float vidaTotal = 100f;
         float vidaNave;
@@ -159,6 +161,8 @@ namespace AlumnoEjemplos.NaveEspacial
             beamSound.loadSound(GuiController.Instance.AlumnoEjemplosMediaDir + "Sounds\\Beam.wav");
             impactSound = new TgcStaticSound();
             impactSound.loadSound(GuiController.Instance.AlumnoEjemplosMediaDir + "Sounds\\Impact.wav");
+            gameOverSound = new TgcStaticSound();
+            gameOverSound.loadSound(GuiController.Instance.AlumnoEjemplosMediaDir + "Sounds\\GameOver.wav");
 
             //inicio la lista
             Disparos = new List<Bullet>();
@@ -173,7 +177,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
             string sphere = GuiController.Instance.ExamplesMediaDir + "ModelosTgc\\Sphere\\Sphere-TgcScene.xml";
             sun = loader.loadSceneFromFile(sphere).Meshes[0];
-            sun.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\SunTexture2.jpg") });
+            sun.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\SunTexture2.png") });
             blurredMeshes.Add(sun);
 
             venus = loader.loadSceneFromFile(sphere).Meshes[0];
@@ -198,7 +202,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
 
             spaceSphere = loader.loadSceneFromFile(sphere).Meshes[0];
-            spaceSphere.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\spaceBackTexture.jpg") });
+            spaceSphere.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\spaceBackTexture2.jpg") });
             spaceSphere.Scale = SPACE_SCALE;
             //blurredMeshes.Add(spaceSphere);
 
@@ -302,6 +306,15 @@ namespace AlumnoEjemplos.NaveEspacial
             textoGameOver.Size = new Size(650, 300);
             textoGameOver.changeFont(new System.Drawing.Font("Arial", 32f, FontStyle.Bold));
             textoGameOver.Text = "GAME OVER!!";
+
+
+            textoRestart = new TgcText2d();
+            textoRestart.Color = Color.YellowGreen;
+            textoRestart.Align = TgcText2d.TextAlign.CENTER;
+            textoRestart.Position = new Point(100, 180);
+            textoRestart.Size = new Size(800, 300);
+            textoRestart.changeFont(new System.Drawing.Font("Arial", 24f, FontStyle.Bold));
+            textoRestart.Text = "Press \"R\" to Restart";
 
 
             //AGREGO UNA NAVE
@@ -420,9 +433,12 @@ namespace AlumnoEjemplos.NaveEspacial
             Vector3 lastPos = spaceShip.Position;
 
             ///////////////INPUT TECLADO//////////////////
-            if (gameOver)
+            if (gameOver)   //apaga el sonido y pone cartel de Game Over
             {
+                ambSound = false;
                 textoGameOver.render();
+                textoRestart.render();
+                if (GuiController.Instance.D3dInput.keyDown(Microsoft.DirectX.DirectInput.Key.R)) { ambSound = true; restartGame(); }
             }
             if (!gameOver)
             {
@@ -467,7 +483,7 @@ namespace AlumnoEjemplos.NaveEspacial
             //Boton Der, disparo
             if (GuiController.Instance.D3dInput.buttonDown(TgcViewer.Utils.Input.TgcD3dInput.MouseButtons.BUTTON_RIGHT) && timeSinceLastShot > 0.5f) //reviso tecla y el intervalo de disparo
             {
-                Bullet disparoTemp = crearBalaPara(spaceShip);
+                Bullet disparoTemp = crearBalaPara(spaceShip, true);
                 shotSound.play();
                 Disparos.Add(disparoTemp);
                 timeSinceLastShot = 0f;
@@ -598,7 +614,7 @@ namespace AlumnoEjemplos.NaveEspacial
                 {
                     if (DistanceAtoB(spaceShip.Position, naveEnemiga.Position) < 80 && timeSinceLastEnemyShot > 1f) //rango de Disparo
                     {
-                        Bullet disparoTempE = crearBalaPara(naveEnemiga);
+                        Bullet disparoTempE = crearBalaPara(naveEnemiga, false);
                         DisparosEnemy.Add(disparoTempE);
                         timeSinceLastEnemyShot = 0f;
                     }
@@ -693,6 +709,7 @@ namespace AlumnoEjemplos.NaveEspacial
             moonOrbitRotation += MOON_ORBIT_SPEED * elapsedTime;
             jupiterOrbitRotation += JUPITER_ORBIT_SPEED * elapsedTime;
             neptuneOrbitRotation += NEPTUNE_ORBIT_SPEED * elapsedTime;
+
             if (!gameOver){
             //checkeo colisiones
             foreach (TgcBoundingSphere col in sphereColisionables)
@@ -700,6 +717,7 @@ namespace AlumnoEjemplos.NaveEspacial
                 if (TgcCollisionUtils.testSphereOBB(col, obbSpaceShip))
                 {
                     spaceShip.Position = lastPos; obbSpaceShip.move(spaceShip.Position - obbSpaceShip.Position);
+                    reducirVida(spaceShip);
                 }
             }
 
@@ -874,14 +892,14 @@ namespace AlumnoEjemplos.NaveEspacial
             shotSound.dispose();
             beamSound.dispose();
             impactSound.dispose();
+            gameOverSound.dispose();
         }
 
         private void reducirVida(TgcMesh spaceShip)
         {
             vidaNave -= 10;
             spriteLife.Scaling = new Vector2(spriteLife.Scaling.X, spriteLife.Scaling.Y * (vidaNave / vidaTotal));
-            if (vidaNave == 0f) { gameOver = true; }
-
+            if (vidaNave == 0f) { gameOverSound.play(); gameOver = true; }
         }
 
         private void reducirNitro(TgcMesh spaceShip, float deltaTime)
@@ -950,11 +968,18 @@ namespace AlumnoEjemplos.NaveEspacial
             return new Vector3(compX, compY, 0);
         }
 
-        Bullet crearBalaPara(TgcMesh owner)
+        Bullet crearBalaPara(TgcMesh owner, bool verde)
         {
             Bullet disparo;
             TgcBox disparoModel;
-            disparoModel = TgcBox.fromSize(new Vector3(0.3f, 0.3f, largoBala), TgcTexture.createTexture(GuiController.Instance.D3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\gbullet.jpg"));
+            if (verde) //verde
+            {
+                disparoModel = TgcBox.fromSize(new Vector3(0.3f, 0.3f, largoBala), TgcTexture.createTexture(GuiController.Instance.D3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\gbullet.jpg"));
+            }
+            else //rojo
+            {
+                disparoModel = TgcBox.fromSize(new Vector3(0.3f, 0.3f, largoBala), TgcTexture.createTexture(GuiController.Instance.D3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\rbullet.jpg"));
+            }
             disparoModel.Position = owner.Position;
             disparoModel.Rotation = owner.Rotation;
             disparoModel.rotateZ(3.14f / 2);
@@ -982,7 +1007,7 @@ namespace AlumnoEjemplos.NaveEspacial
             Device d3dDevice = GuiController.Instance.D3dDevice;
 
             asteroideModel = new TgcSphere();
-            asteroideModel.setTexture(TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\AsteroidTexture.jpg"));
+            asteroideModel.setTexture(TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\AsteroidTexture2.jpg"));
             Random rndScale = new Random();
             asteroideModel.Radius = ASTEROID_RADIO + 10 * ((float)rndScale.NextDouble());
             Random rndPosition = new Random();
@@ -994,6 +1019,33 @@ namespace AlumnoEjemplos.NaveEspacial
             asteroideModel.updateValues();
             asteroide = new Asteroids(asteroideModel);
             return asteroide;
+        }
+
+        Vector3 nuevaPosicionRandomNave()
+        {
+            Vector3 newPos = new Vector3();
+            Random rndPositionX = new Random();
+            Random rndBoolX = new Random();
+            Random rndPositionY = new Random();
+            Random rndBoolY = new Random();
+            Random rndPositionZ = new Random();
+            Random rndBoolZ = new Random();
+            if ((float)rndBoolX.NextDouble() < 0.5f){newPos.X = (-800 * ((float)rndPositionX.NextDouble() + 0.1f));}
+                                                else{newPos.X = (800 * ((float)rndPositionX.NextDouble() + 0.1f));}
+            if ((float)rndBoolY.NextDouble() < 0.5f){newPos.Y = (-800 * ((float)rndPositionY.NextDouble() + 0.1f));}
+                                                else{newPos.Y = (800 * ((float)rndPositionY.NextDouble() + 0.1f));}
+            if ((float)rndBoolZ.NextDouble() < 0.5f){newPos.Z = (-800 * ((float)rndPositionZ.NextDouble() + 0.1f));}
+                                                else{newPos.Z = (800 * ((float)rndPositionZ.NextDouble() + 0.1f));}
+            return newPos;
+        }
+
+
+        void restartGame()
+        {
+            vidaNave = vidaTotal;
+            nitroNave = nitroNaveTotal;
+            spaceShip.Position = nuevaPosicionRandomNave();
+            gameOver = false;
         }
     }
 
