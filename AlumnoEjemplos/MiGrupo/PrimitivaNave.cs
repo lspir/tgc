@@ -177,7 +177,7 @@ namespace AlumnoEjemplos.NaveEspacial
 
             string sphere = GuiController.Instance.ExamplesMediaDir + "ModelosTgc\\Sphere\\Sphere-TgcScene.xml";
             sun = loader.loadSceneFromFile(sphere).Meshes[0];
-            sun.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\SunTexture2.png") });
+            sun.changeDiffuseMaps(new TgcTexture[] { TgcTexture.createTexture(d3dDevice, GuiController.Instance.AlumnoEjemplosMediaDir + "Texturas\\SunTexture2.jpg") });
             blurredMeshes.Add(sun);
 
             venus = loader.loadSceneFromFile(sphere).Meshes[0];
